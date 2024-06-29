@@ -1,0 +1,26 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DevSimpleQuiz/Backend.git"
+  },
+  "author": "Jinho Im",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DevSimpleQuiz/Backend/issues"
+  },
+  "homepage": "https://github.com/DevSimpleQuiz/Backend#readme",
+  "description": "",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "hangul-js": "^0.2.6",
+    "nodemon": "^3.1.4"
+  }
+}
