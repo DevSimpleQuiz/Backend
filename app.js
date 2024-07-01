@@ -1,21 +1,16 @@
 const express = require("express");
-const {
-  loadData,
-  generateQuizSet,
-} = require("./srcs/quizGeneration/quizModule.js");
+const dotenv = require("dotenv");
+dotenv.config();
+PORT = process.env.PORT || 3000;
 
 app = express();
-PORT = 4242;
 
-(async () => {
-  // 엑셀 파일 로드
-  await loadData("data/words.xlsx");
-
-  // 랜덤 퀴즈 세트 생성
-  // const quizSet = generateQuizSet();
-
-  // console.log(JSON.stringify(quizSet, null, 2));
-})();
+// const userRouter = require("./routes/users");
+const quizRouter = require("./src/routes/quiz");
+// const categoryRouter = require("./routes/category");
+// const likeRouter = require("./routes/likes");
+// const cartRouter = require("./routes/carts");
+// const orderRouter = require("./routes/orders");
 
 app.get("/", (req, res) => {
   return res.send("JS version express setting.");
@@ -25,15 +20,7 @@ app.get("/", (req, res) => {
 //   return res.send("quiz.");
 // });
 
-app.get("/quiz", (req, res) => {
-  try {
-    // 랜덤 퀴즈 세트 생성
-    const quizSet = generateQuizSet();
-    res.json(quizSet);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+app.use("/quiz", quizRouter);
 
 /**
  * login한 유저인지 확인, JWT를 이용한다.
