@@ -4,6 +4,6 @@ const router = express.Router();
 // const { isLoggedIn, isNotLoggedIn } = require("../middlewares");
 const { quizGeneration } = require("../controllers/quizController");
 
-router.get("/", quizGeneration);
+router.post("/", quizGeneration);
 
 module.exports = router;

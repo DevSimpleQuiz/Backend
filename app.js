@@ -5,7 +5,8 @@ PORT = process.env.PORT || 3000;
 
 app = express();
 
-// const userRouter = require("./routes/users");
+const joinRouter = require("./src/routes/join");
+const usersRouter = require("./src/routes/users");
 const quizRouter = require("./src/routes/quiz");
 // const categoryRouter = require("./routes/category");
 // const likeRouter = require("./routes/likes");
@@ -20,6 +21,8 @@ app.get("/", (req, res) => {
 //   return res.send("quiz.");
 // });
 
+app.use("/join", joinRouter);
+app.use("/users", usersRouter);
 app.use("/quiz", quizRouter);
 
 /**
