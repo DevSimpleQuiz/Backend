@@ -1,0 +1,64 @@
+{
+  "quizzes": [
+    {
+      "word": "엉덩이",
+      "definition": "허리와 허벅지 사이의 부분으로 앉았을 때 바닥에 닿는, 살이 많은 부위.",
+      "initialConstant": "ㅇㄷㅇ",
+      "wordLength": 3
+    },
+    {
+      "word": "동그라미",
+      "definition": "동그란 모양., 동그랗게 생긴 물체.",
+      "initialConstant": "ㄷㄱㄹㅁ",
+      "wordLength": 4
+    },
+    {
+      "word": "북부",
+      "definition": "어떤 지역의 북쪽 부분.",
+      "initialConstant": "ㅂㅂ",
+      "wordLength": 2
+    },
+    {
+      "word": "소풍",
+      "definition": "경치를 즐기거나 놀이를 하기 위하여 야외에 나갔다 오는 일.",
+      "initialConstant": "ㅅㅍ",
+      "wordLength": 2
+    },
+    {
+      "word": "상처",
+      "definition": "아내가 죽는 일을 당함., 몸을 다쳐서 상한 자리., 피해를 당해 마음이 아픈 일.",
+      "initialConstant": "ㅅㅊ",
+      "wordLength": 2
+    },
+    {
+      "word": "건물",
+      "definition": "사람이 살거나 일을 하거나 물건을 보관하기 위해 지은 벽과 지붕이 있는 구조물.",
+      "initialConstant": "ㄱㅁ",
+      "wordLength": 2
+    },
+    {
+      "word": "사월",
+      "definition": "일 년 열두 달 가운데 넷째 달.",
+      "initialConstant": "ㅅㅇ",
+      "wordLength": 2
+    },
+    {
+      "word": "기성세대",
+      "definition": "현재 사회를 이끌어 가는 나이가 든 세대.",
+      "initialConstant": "ㄱㅅㅅㄷ",
+      "wordLength": 4
+    },
+    {
+      "word": "사투리",
+      "definition": "일부 지방에서만 쓰는, 표준어가 아닌 말.",
+      "initialConstant": "ㅅㅌㄹ",
+      "wordLength": 3
+    },
+    {
+      "word": "기대",
+      "definition": "어떤 일이 이루어지기를 바라며 기다림.",
+      "initialConstant": "ㄱㄷ",
+      "wordLength": 2
+    }
+  ]
+}
