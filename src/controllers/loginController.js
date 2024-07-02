@@ -1,36 +1,18 @@
 // const conn = require("../mariadb"); // db 모듈
-const { StatusCodes } = require("http-status-codes"); // statud code 모듈
-const jwt = require("jsonwebtoken"); // jwt 모듈
-const crypto = require("crypto"); // crypto 모듈 : 암호화
+const { StatusCodes } = require('http-status-codes'); // statud code 모듈
+const jwt = require('jsonwebtoken'); // jwt 모듈
+const crypto = require('crypto'); // crypto 모듈 : 암호화
+const { findUser } = require('../utils/util.js');
+
 // const dotenv = require("dotenv"); // dotenv 모듈
 // dotenv.config();
-
-const join = (req, res) => {
-  const { id, password } = req.body;
-
-  // let sql = "INSERT INTO users (email, password, salt) VALUES (?, ?, ?)";
-
-  // 암호화된 비밀번호와 salt 값을 같이 DB에 저장
-  const salt = crypto.randomBytes(10).toString("base64");
-  const hashPassword = crypto
-    .pbkdf2Sync(password, salt, 10000, 10, "sha512")
-    .toString("base64");
-
-  let values = [email, hashPassword, salt];
-  // conn.query(sql, values, (err, results) => {
-  //   if (err) {
-  //     console.log(err);
-  //     return res.status(StatusCodes.BAD_REQUEST).end();
-  //   }
-
-  //   if (results.affectedRows)
-  //     return res.status(StatusCodes.CREATED).json(results);
-  //   else return res.status(StatusCodes.BAD_REQUEST).end();
-  // });
-};
+const {
+  SALT_BYTE_SEQUENCE_SIZE,
+  HASH_REPEAT_TIMES,
+} = require('../constants/constant.js');
 
 const login = (req, res) => {
-  const { email, password } = req.body;
+  const { id, password } = req.body;
 
   // let sql = "SELECT * FROM users WHERE email = ?";
   // conn.query(sql, email, (err, results) => {
@@ -38,13 +20,20 @@ const login = (req, res) => {
   //   console.log(err);
   //   return res.status(StatusCodes.BAD_REQUEST).end();
   // }
-  {
-    const loginUser = results[0];
+  const loginUser = findUser(id);
+  console.log('# loginUser : ', loginUser);
 
+  if (loginUser === null) {
     // salt값 꺼내서 날 것으로 들어온 비밀번호를 암호화 해보고
     const hashPassword = crypto
-      .pbkdf2Sync(password, loginUser.salt, 10000, 10, "sha512")
-      .toString("base64");
+      .pbkdf2Sync(
+        password,
+        loginUser.salt,
+        HASH_REPEAT_TIMES,
+        SALT_BYTE_SEQUENCE_SIZE,
+        'sha512',
+      )
+      .toString('base64');
 
     // => 디비 비밀번호랑 비교
     if (loginUser && loginUser.password == hashPassword) {
@@ -56,13 +45,13 @@ const login = (req, res) => {
         },
         process.env.PRIVATE_KEY,
         {
-          expiresIn: "10m",
-          issuer: "jinho",
-        }
+          expiresIn: '10m',
+          issuer: 'jinho',
+        },
       );
 
       // 토큰 쿠키에 담기
-      res.cookie("token", token, {
+      res.cookie('token', token, {
         httpOnly: true,
       });
       console.log(token);
@@ -124,8 +113,7 @@ const passwordReset = (req, res) => {
 */
 
 module.exports = {
-  join,
-  // login,
+  login,
   // passwordResetRequest,
   // passwordReset,
 };
