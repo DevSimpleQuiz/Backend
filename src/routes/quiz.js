@@ -1,9 +1,8 @@
-const express = require("express");
+const express = require('express');
+const { quizGeneration } = require('../controllers/quizController');
+
 const router = express.Router();
 
-// const { isLoggedIn, isNotLoggedIn } = require("../middlewares");
-const { quizGeneration } = require("../controllers/quizController");
-
-router.get("/", quizGeneration);
+router.get('/', quizGeneration);
 
 module.exports = router;

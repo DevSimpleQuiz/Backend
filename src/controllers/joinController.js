@@ -1,13 +1,10 @@
-// const conn = require("../mariadb"); // db 모듈
-const { StatusCodes } = require("http-status-codes"); // statud code 모듈
-const crypto = require("crypto"); // crypto 모듈 : 암호화
+const { StatusCodes } = require("http-status-codes");
+const crypto = require("crypto");
 const users = require("../db/users");
 const scores = require("../db/scores");
-// const dotenv = require("dotenv"); // dotenv 모듈
-// dotenv.config();
 
 const SALT_BYTE_SEQUENCE_SIZE = 32;
-const HASH_REPEAT_TIMES = 10000; // 해시 생성 시 반복할 횟수입니다. 반복 횟수가 많을수록 해시 생성에 시간이 더 걸리므로 공격자가 해시값을 깨기 어렵게 합니다.
+const HASH_REPEAT_TIMES = 10000;
 
 let scoreId = 1;
 let userId = 1;
@@ -69,7 +66,6 @@ const join = (req, res) => {
   }
 };
 
-// "/join/check-login-id", 회원가입인데 check-login-id이 맞는가?,
 const checkLoginId = (req, res) => {
   const { id } = req.body;
 
