@@ -8,6 +8,8 @@ app = express();
 const joinRouter = require("./src/routes/join");
 const usersRouter = require("./src/routes/users");
 const quizRouter = require("./src/routes/quiz");
+// const rankRouter = require("./src/routes/rank");
+
 // const categoryRouter = require("./routes/category");
 // const likeRouter = require("./routes/likes");
 // const cartRouter = require("./routes/carts");
