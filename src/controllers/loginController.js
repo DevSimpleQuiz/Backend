@@ -1,15 +1,15 @@
 // const conn = require("../mariadb"); // db 모듈
-const { StatusCodes } = require('http-status-codes'); // statud code 모듈
-const jwt = require('jsonwebtoken'); // jwt 모듈
-const crypto = require('crypto'); // crypto 모듈 : 암호화
-const { findUser } = require('../utils/util.js');
+const { StatusCodes } = require("http-status-codes"); // statud code 모듈
+const jwt = require("jsonwebtoken"); // jwt 모듈
+const crypto = require("crypto"); // crypto 모듈 : 암호화
+const { findUser } = require("../utils/util.js");
 
 // const dotenv = require("dotenv"); // dotenv 모듈
 // dotenv.config();
 const {
   SALT_BYTE_SEQUENCE_SIZE,
   HASH_REPEAT_TIMES,
-} = require('../constants/constant.js');
+} = require("../constants/constant.js");
 
 const login = (req, res) => {
   const { id, password } = req.body;
@@ -21,7 +21,7 @@ const login = (req, res) => {
   //   return res.status(StatusCodes.BAD_REQUEST).end();
   // }
   const loginUser = findUser(id);
-  console.log('# loginUser : ', loginUser);
+  console.log("# loginUser : ", loginUser);
 
   if (loginUser === null) {
     // salt값 꺼내서 날 것으로 들어온 비밀번호를 암호화 해보고
@@ -31,9 +31,9 @@ const login = (req, res) => {
         loginUser.salt,
         HASH_REPEAT_TIMES,
         SALT_BYTE_SEQUENCE_SIZE,
-        'sha512',
+        "sha512"
       )
-      .toString('base64');
+      .toString("base64");
 
     // => 디비 비밀번호랑 비교
     if (loginUser && loginUser.password == hashPassword) {
@@ -41,17 +41,16 @@ const login = (req, res) => {
       const token = jwt.sign(
         {
           id: loginUser.id,
-          email: loginUser.email,
         },
         process.env.PRIVATE_KEY,
         {
-          expiresIn: '10m',
-          issuer: 'jinho',
-        },
+          expiresIn: "10m",
+          issuer: "jinho",
+        }
       );
 
       // 토큰 쿠키에 담기
-      res.cookie('token', token, {
+      res.cookie("token", token, {
         httpOnly: true,
       });
       console.log(token);

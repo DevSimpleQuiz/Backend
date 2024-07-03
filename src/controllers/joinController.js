@@ -1,13 +1,13 @@
-const { StatusCodes } = require('http-status-codes');
-const crypto = require('crypto');
-const users = require('../db/users');
-const score = require('../db/score');
-const { findUser } = require('../utils/util.js');
+const { StatusCodes } = require("http-status-codes");
+const crypto = require("crypto");
+const users = require("../db/users");
+const score = require("../db/score");
+const { findUser } = require("../utils/util.js");
 
 const {
   SALT_BYTE_SEQUENCE_SIZE,
   HASH_REPEAT_TIMES,
-} = require('../constants/constant.js');
+} = require("../constants/constant.js");
 
 let scoreId = 1;
 let userId = 1;
@@ -17,23 +17,23 @@ const join = (req, res) => {
 
   // 암호화된 비밀번호와 salt 값을 같이 DB에 저장
   try {
-    const salt = crypto.randomBytes(SALT_BYTE_SEQUENCE_SIZE).toString('base64');
+    const salt = crypto.randomBytes(SALT_BYTE_SEQUENCE_SIZE).toString("base64");
     const hashPassword = crypto
       .pbkdf2Sync(
         password,
         salt,
         HASH_REPEAT_TIMES,
         SALT_BYTE_SEQUENCE_SIZE,
-        'sha512',
+        "sha512"
       )
-      .toString('base64');
+      .toString("base64");
 
     if (findUser(id) !== null) {
       return res.status(StatusCodes.CONFLICT).json({
-        message: '중복된 아이디입니다.',
+        message: "중복된 아이디입니다.",
       });
     } else {
-      users.set(userId, { id, hashPassword, salt, scoreId });
+      users.set(userId, { id, password: hashPassword, salt, scoreId });
       score.set(scoreId, {
         id,
         totalQuizCount: 0,
@@ -42,7 +42,7 @@ const join = (req, res) => {
       });
       userId++;
       scoreId++;
-      return res.status(StatusCodes.CREATED).json({ message: 'OK' });
+      return res.status(StatusCodes.CREATED).json({ message: "OK" });
     }
   } catch (err) {
     console.error(err);
