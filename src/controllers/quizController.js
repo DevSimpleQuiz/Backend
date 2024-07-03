@@ -2,8 +2,6 @@ const StatusCodes = require("http-status-codes");
 const jwt = require("jsonwebtoken"); // jwt 모듈
 const { loadData, generateQuizSet } = require("../quizGeneration/quizModule");
 const { accumulateScoreInfo, findScoreInfo } = require("../utils/util");
-// const crypto = require("crypto"); // crypto 모듈 : 암호화
-// const { isLoggedIn, isNotLoggedIn } = require("../middlewares");
 
 (async () => {
   // 엑셀 파일 로드
@@ -29,11 +27,7 @@ const generateQuiz = (req, res) => {
 const handleQuizResult = (req, res) => {
   const { totalQuizCount, solvedQuizCount, totalQuizScore } = req.body;
 
-  console.log(
-    `totalQuizCount : ${totalQuizCount}, solvedQuizCount : ${solvedQuizCount}, totalQuizScore : ${totalQuizScore}`
-  );
   const token = req.cookies.token;
-  console.log("token : ", token);
 
   let payload;
 
@@ -45,7 +39,6 @@ const handleQuizResult = (req, res) => {
     payload = decoded; // Save the decoded payload to the request object
   });
 
-  console.log("payload : ", payload);
   const id = payload.id;
   if (
     accumulateScoreInfo(id, { totalQuizCount, solvedQuizCount, totalQuizScore })

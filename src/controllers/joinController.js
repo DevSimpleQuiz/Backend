@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 const crypto = require("crypto");
 const users = require("../db/users");
-const score = require("../db/score");
+const scores = require("../db/scores");
 const { findUser } = require("../utils/util.js");
 
 const {
@@ -9,8 +9,11 @@ const {
   HASH_REPEAT_TIMES,
 } = require("../constants/constant.js");
 
-let scoreId = 1;
-let userId = 1;
+let scoreId = Object.keys(scores).length || 1;
+let userId = Object.keys(users).length || 1;
+
+console.log(`scoreId : ${scoreId}`);
+console.log(`userId : ${userId}`);
 
 const join = (req, res) => {
   const { id, password } = req.body;
@@ -34,7 +37,7 @@ const join = (req, res) => {
       });
     } else {
       users.set(userId, { id, password: hashPassword, salt, scoreId });
-      score.set(scoreId, {
+      scores.set(scoreId, {
         id,
         totalQuizCount: 0,
         solvedQuizCount: 0,

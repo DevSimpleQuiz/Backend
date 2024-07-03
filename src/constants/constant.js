@@ -1,4 +1,11 @@
 const SALT_BYTE_SEQUENCE_SIZE = 32;
 const HASH_REPEAT_TIMES = 10000;
+const USER_DATA_FILE_PATH = "data/users.json";
+const SCORE_DATA_FILE_PATH = "data/scores.json";
 
-module.exports = { SALT_BYTE_SEQUENCE_SIZE, HASH_REPEAT_TIMES };
+module.exports = {
+  SALT_BYTE_SEQUENCE_SIZE,
+  HASH_REPEAT_TIMES,
+  USER_DATA_FILE_PATH,
+  SCORE_DATA_FILE_PATH,
+};

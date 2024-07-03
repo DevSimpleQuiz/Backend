@@ -1,5 +1,5 @@
 const users = require("../db/users.js");
-const score = require("../db/score.js");
+const scores = require("../db/scores.js");
 
 const isAlphaNumeric = (str) => {
   for (const code of str) {
@@ -39,12 +39,13 @@ const findScoreInfo = function (id) {
   const userInfo = findUser(id);
 
   console.log("userInfo in findScoreInfo : ", userInfo);
+  console.log("scores : ", scores);
 
   if (userInfo === null) {
     return null;
   }
 
-  return score.get(userInfo["scoreId"]);
+  return scores.get(userInfo["scoreId"]);
 };
 
 // overflow 고려가 필요한가?

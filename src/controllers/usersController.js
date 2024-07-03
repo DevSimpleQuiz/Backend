@@ -48,6 +48,8 @@ const login = (req, res) => {
         httpOnly: true,
       });
 
+      console.log("token : ", token);
+
       return res.status(StatusCodes.NO_CONTENT).end();
     } else {
       return res.status(StatusCodes.UNAUTHORIZED).json({
