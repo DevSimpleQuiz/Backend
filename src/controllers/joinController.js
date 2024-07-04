@@ -1,19 +1,33 @@
 const { StatusCodes } = require("http-status-codes");
 const crypto = require("crypto");
-const users = require("../db/users");
-const scores = require("../db/scores");
 const { findUser } = require("../utils/util.js");
+const connection = require("../db/mysqldb.js");
+const userQuery = require("../queries/userQuery.js");
 
 const {
   SALT_BYTE_SEQUENCE_SIZE,
   HASH_REPEAT_TIMES,
 } = require("../constants/constant.js");
 
-let scoreId = Object.keys(scores).length || 1;
-let userId = Object.keys(users).length || 1;
-
-const join = (req, res) => {
+const join = async (req, res) => {
   const { id, password } = req.body;
+
+  // id 중복 확인
+  try {
+    const getUserIdResult = await connection.query(userQuery.getUserId, id);
+    const userId = getUserIdResult[0][0];
+
+    if (userId) {
+      return res.status(StatusCodes.CONFLICT).json({
+        message: "이미 사용 중인 아이디입니다.",
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Server error" });
+  }
 
   // 암호화된 비밀번호와 salt 값을 같이 DB에 저장
   try {
@@ -28,25 +42,14 @@ const join = (req, res) => {
       )
       .toString("base64");
 
-    if (findUser(id) !== null) {
-      return res.status(StatusCodes.CONFLICT).json({
-        message: "중복된 아이디입니다.",
-      });
-    } else {
-      users.set(userId, { id, password: hashPassword, salt, scoreId });
-      scores.set(scoreId, {
-        id,
-        totalQuizCount: 0,
-        solvedQuizCount: 0,
-        totalQuizScore: 0,
-      });
-      userId++;
-      scoreId++;
-      return res.status(StatusCodes.CREATED).json({ message: "OK" });
-    }
+    let values = [id, hashPassword, salt];
+
+    await connection.query(userQuery.join, values);
+
+    return res.status(StatusCodes.CREATED).json({ message: "OK" });
   } catch (err) {
-    console.error(err);
-    return res.status(StatusCodes.CONFLICT).json({ message: err });
+    console.error("insert error ", err);
+    return res.status(StatusCodes.CONFLICT).json({ message: "Server error" });
   }
 };
 
