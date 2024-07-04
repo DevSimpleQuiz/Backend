@@ -38,9 +38,6 @@ const findUser = function (id) {
 const findScoreInfo = function (id) {
   const userInfo = findUser(id);
 
-  console.log("userInfo in findScoreInfo : ", userInfo);
-  console.log("scores : ", scores);
-
   if (userInfo === null) {
     return null;
   }
@@ -50,10 +47,8 @@ const findScoreInfo = function (id) {
 
 // overflow 고려가 필요한가?
 const accumulateScoreInfo = function (id, quizResultInfo) {
-  console.log("id : ", id);
   scoreInfo = findScoreInfo(id);
 
-  console.log("scoreInfo : ", scoreInfo);
   if (!scoreInfo) return false;
 
   scoreInfo.totalQuizCount += quizResultInfo.totalQuizCount;

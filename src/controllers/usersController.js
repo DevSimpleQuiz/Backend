@@ -48,8 +48,6 @@ const login = (req, res) => {
         httpOnly: true,
       });
 
-      console.log("token : ", token);
-
       return res.status(StatusCodes.NO_CONTENT).end();
     } else {
       return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -62,56 +60,6 @@ const login = (req, res) => {
   });
 };
 
-/*
-const passwordResetRequest = (req, res) => {
-  const { email } = req.body;
-
-  let sql = "SELECT * FROM users WHERE email = ?";
-  conn.query(sql, email, (err, results) => {
-    if (err) {
-      console.log(err);
-      return res.status(StatusCodes.BAD_REQUEST).end();
-    }
-
-    // 이메일로 유저가 있는지 찾아봅니다!
-    const user = results[0];
-    if (user) {
-      return res.status(StatusCodes.OK).json({
-        email: email,
-      });
-    } else {
-      return res.status(StatusCodes.UNAUTHORIZED).end();
-    }
-  });
-};
-
-const passwordReset = (req, res) => {
-  const { email, password } = req.body;
-
-  let sql = `UPDATE users SET password=?, salt=? WHERE email=?`;
-
-  // 암호화된 비밀번호와 salt 값을 같이 DB에 저장
-  const salt = crypto.randomBytes(10).toString("base64");
-  const hashPassword = crypto
-    .pbkdf2Sync(password, salt, 10000, 10, "sha512")
-    .toString("base64");
-
-  let values = [hashPassword, salt, email];
-  conn.query(sql, values, (err, results) => {
-    if (err) {
-      console.log(err);
-      return res.status(StatusCodes.BAD_REQUEST).end();
-    }
-
-    if (results.affectedRows == 0)
-      return res.status(StatusCodes.BAD_REQUEST).end();
-    else return res.status(StatusCodes.OK).json(results);
-  });
-};
-*/
-
 module.exports = {
   login,
-  // passwordResetRequest,
-  // passwordReset,
 };

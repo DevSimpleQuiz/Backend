@@ -12,9 +12,6 @@ const {
 let scoreId = Object.keys(scores).length || 1;
 let userId = Object.keys(users).length || 1;
 
-console.log(`scoreId : ${scoreId}`);
-console.log(`userId : ${userId}`);
-
 const join = (req, res) => {
   const { id, password } = req.body;
 
