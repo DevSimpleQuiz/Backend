@@ -2,31 +2,18 @@ const { StatusCodes } = require("http-status-codes");
 const crypto = require("crypto");
 const users = require("../db/users");
 const scores = require("../db/scores");
+const { findUser } = require("../utils/util.js");
 
-const SALT_BYTE_SEQUENCE_SIZE = 32;
-const HASH_REPEAT_TIMES = 10000;
+const {
+  SALT_BYTE_SEQUENCE_SIZE,
+  HASH_REPEAT_TIMES,
+} = require("../constants/constant.js");
 
-let scoreId = 1;
-let userId = 1;
+let scoreId = Object.keys(scores).length || 1;
+let userId = Object.keys(users).length || 1;
 
-const findUser = function (id) {
-  for (const [_, user] of users) {
-    if (user["id"] === id) {
-      return user;
-    }
-  }
-  return null;
-};
-
-const findScoreInfo = function (id) {
-  const userInfo = findUser(id);
-
-  if (userInfo === null) {
-    return null;
-  }
-
-  return scores.get(userInfo["scoreId"]);
-};
+console.log(`scoreId : ${scoreId}`);
+console.log(`userId : ${userId}`);
 
 const join = (req, res) => {
   const { id, password } = req.body;
@@ -49,7 +36,7 @@ const join = (req, res) => {
         message: "중복된 아이디입니다.",
       });
     } else {
-      users.set(userId, { id, hashPassword, salt, scoreId });
+      users.set(userId, { id, password: hashPassword, salt, scoreId });
       scores.set(scoreId, {
         id,
         totalQuizCount: 0,
