@@ -1,4 +1,6 @@
 const express = require("express");
+const { quizGeneration } = require("../controllers/quizController");
+
 const router = express.Router();
 
 // const { isLoggedIn, isNotLoggedIn } = require("../middlewares");

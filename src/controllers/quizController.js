@@ -4,7 +4,7 @@ const { loadData, generateQuizSet } = require("../quizGeneration/quizModule");
 const { accumulateScoreInfo, findScoreInfo } = require("../utils/util");
 
 (async () => {
-  // 엑셀 파일 로드
+  // 퀴즈용 엑셀 파일 로드, 최초 한번만 호출
   await loadData("data/words.xlsx");
 })();
 
@@ -12,6 +12,7 @@ const generateQuiz = (req, res) => {
   try {
     // 랜덤 퀴즈 세트 생성
     const quizSet = generateQuizSet();
+
     return res.json(quizSet);
   } catch (error) {
     return res
