@@ -1,6 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
 const crypto = require("crypto");
-const { findUser } = require("../utils/util.js");
 const connection = require("../db/mysqldb.js");
 const userQuery = require("../queries/userQuery.js");
 
@@ -53,21 +52,24 @@ const join = async (req, res) => {
   }
 };
 
-const checkLoginId = (req, res) => {
+const checkLoginId = async (req, res) => {
   const { id } = req.body;
-
+  // id 중복 확인
   try {
-    let results;
+    const getUserIdResult = await connection.query(userQuery.getUserId, id);
+    const userId = getUserIdResult[0][0];
 
-    if (findUser(id)) {
+    if (userId) {
       results = { isDulicated: true };
     } else {
       results = { isDulicated: false };
     }
     return res.status(StatusCodes.OK).json(results);
   } catch (err) {
-    console.error(err); // logger로 대체 예정
-    return res.json({ message: err });
+    console.error(err);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Server error" });
   }
 };
 
