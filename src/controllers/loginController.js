@@ -1,11 +1,9 @@
-// const conn = require("../mariadb"); // db 모듈
+const connnection = require("../db/mysqldb"); // db 모듈
 const { StatusCodes } = require("http-status-codes"); // statud code 모듈
 const jwt = require("jsonwebtoken"); // jwt 모듈
 const crypto = require("crypto"); // crypto 모듈 : 암호화
 const { findUser } = require("../utils/util.js");
 
-// const dotenv = require("dotenv"); // dotenv 모듈
-// dotenv.config();
 const {
   SALT_BYTE_SEQUENCE_SIZE,
   HASH_REPEAT_TIMES,
