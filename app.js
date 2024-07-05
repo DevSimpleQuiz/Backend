@@ -3,19 +3,18 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 
 dotenv.config();
-PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 app = express();
 
 app.use(cookieParser());
 app.use(express.json());
 
-const joinRouter = require("./src/routes/join");
-const loginRouter = require("./src/routes/login");
+const usersRouter = require("./src/routes/users");
 const quizRouter = require("./src/routes/quiz");
 
-app.use("/join", joinRouter);
-app.use("/login", loginRouter);
+// logout 구현
+app.use("/users", usersRouter);
 app.use("/quiz-result", quizRouter); // quizRoutes를 method만으로 구분 중이라 분리 필요
 app.use("/quiz", quizRouter);
 
