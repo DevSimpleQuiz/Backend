@@ -10,11 +10,11 @@ app = express();
 app.use(cookieParser());
 app.use(express.json());
 
-const usersRouter = require("./src/routes/users");
+const userRouter = require("./src/routes/user");
 const quizRouter = require("./src/routes/quiz");
 
 // logout 구현
-app.use("/users", usersRouter);
+app.use("/user", userRouter);
 app.use("/quiz-result", quizRouter); // quizRoutes를 method만으로 구분 중이라 분리 필요
 app.use("/quiz", quizRouter);
 

@@ -6,6 +6,8 @@ const {
   join,
   checkLoginId,
   login,
+  isAvailablePassword, // naming 결 고려
+  isCurrentPassword,
   passwordResetRequest,
   passwordReset,
 } = require("../controllers/userController");
@@ -15,7 +17,8 @@ router.post("/join/check-login-id", checkLoginId); // 아이디 중복 검사
 
 router.post("/login", login);
 
-router.post("/reset", passwordResetRequest);
+router.post("/action/is-current-password", isCurrentPassword);
+router.post("/action/is-available-password", isAvailablePassword);
 router.put("/reset", passwordReset);
 
 module.exports = router;

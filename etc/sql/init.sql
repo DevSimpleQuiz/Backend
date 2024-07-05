@@ -4,8 +4,8 @@ CREATE DATABASE devsimplequiz;
 -- 데이터베이스 사용
 USE devsimplequiz;
 
--- users 테이블 생성
-CREATE TABLE users (
+-- user 테이블 생성
+CREATE TABLE user (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id varchar(20) NOT NULL,
     password char(45) NOT NULL,
@@ -31,6 +31,6 @@ CREATE TABLE score (
     total_score INT NOT NULL DEFAULT 0,
     modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
