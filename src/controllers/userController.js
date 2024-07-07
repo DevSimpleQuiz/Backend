@@ -3,7 +3,6 @@ const crypto = require("crypto");
 const createError = require("http-errors");
 const connection = require("../db/mysqldb"); // db 모듈
 const userQuery = require("../queries/userQuery.js");
-const { verifyToken } = require("../services/jwtService");
 
 const {
   SALT_BYTE_SEQUENCE_SIZE,
@@ -11,8 +10,10 @@ const {
   DIGEST_ALGORITHM,
   ENCODING_STYLE,
 } = require("../constant/constant.js");
-const { convertHashPassword, generateSalt } = require("../services/userService.js");
-
+const {
+  convertHashPassword,
+  generateSalt,
+} = require("../services/userService.js");
 const { verifyToken } = require("../services/jwtService.js");
 
 const join = async (req, res) => {
@@ -179,10 +180,7 @@ const isCurrentPassword = async (req, res) => {
       );
     }
 
-    const hashPassword = convertHashPassword(
-      password,
-      generateSalt(),
-    );
+    const hashPassword = convertHashPassword(password, generateSalt());
 
     if (loginUser.password !== hashPassword) {
       throw createError(
@@ -190,7 +188,7 @@ const isCurrentPassword = async (req, res) => {
         "비밀번호가 일치하지 않습니다."
       );
     }
-    return res.status(StatusCodes.NO
+    return res.status(StatusCodes.NO_CONTENT).end();
   } catch (error) {
     // return res
     //   .status(StatusCodes.INTERNAL_SERVER_ERROR)
@@ -223,10 +221,6 @@ const isAvailablePassword = async (req, res) => {
  * 현재 비밀번호가 맞는지 확인,
  * 변경 비밀번호와 현재 비밀번호가 다른지 확인
  */
-const passwordResetRequest = async (req, res) => {
-  // return re
-};
-
 const passwordReset = (req, res) => {
   // return re
 };
@@ -237,6 +231,5 @@ module.exports = {
   login,
   isCurrentPassword,
   isAvailablePassword,
-  passwordResetRequest,
   passwordReset,
 };
