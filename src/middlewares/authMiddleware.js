@@ -2,6 +2,7 @@
 const createError = require("http-errors");
 const { StatusCodes } = require("http-status-codes");
 const { verifyToken } = require("../services/jwtService");
+const jwt = require("jsonwebtoken");
 
 const isAuthenticated = (req, res, next) => {
   const token = req.cookies.token;
@@ -15,31 +16,44 @@ const isAuthenticated = (req, res, next) => {
     );
   }
 
-  try {
-    const payload = verifyToken(token);
-    if (!payload) {
-      return next(
-        createError(StatusCodes.UNAUTHORIZED, "토큰이 유효하지 않습니다.")
-      );
-    }
-    req.user = payload; // 요청에 사용자 정보를 추가
-    next();
-  } catch (error) {
-    next(error);
-  }
+  verifyToken(token)
+    .then((payload) => {
+      req.user = payload; // 요청에 사용자 정보를 추가
+      next();
+    })
+    .catch((err) => {
+      next(err); // 토큰 관련 에러를 미들웨어 체인에 전달
+    });
 };
 
-// 미인증된 사용자 체크 미들웨어
 const isNotAuthenticated = (req, res, next) => {
   const token = req.cookies.token;
 
   if (token) {
-    return next(
-      createError(StatusCodes.FORBIDDEN, "이미 인증된 사용자입니다.")
-    );
+    jwt.verify(token, process.env.JWT_PRIVATE_KEY, (err, decoded) => {
+      if (err) {
+        if (err.name === "TokenExpiredError") {
+          // 토큰이 만료된 경우
+          return next(
+            createError(StatusCodes.UNAUTHORIZED, "토큰이 만료되었습니다.")
+          );
+        } else {
+          // 그 외의 인증 오류
+          return next(
+            createError(StatusCodes.UNAUTHORIZED, "인증에 실패했습니다.")
+          );
+        }
+      } else {
+        // 토큰이 유효한 경우, 이미 인증된 사용자
+        return next(
+          createError(StatusCodes.FORBIDDEN, "이미 인증된 사용자입니다.")
+        );
+      }
+    });
+  } else {
+    // 토큰이 없는 경우, 인증되지 않은 사용자
+    next();
   }
-
-  next();
 };
 
 module.exports = {

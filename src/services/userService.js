@@ -8,10 +8,7 @@ const {
 } = require("../constant/constant.js");
 
 const generateSalt = () => {
-  const BYTE_SIZE = 32;
-  const ENCODING = "base64";
-
-  return crypto.randomBytes(BYTE_SIZE).toString(ENCODING);
+  return crypto.randomBytes(SALT_BYTE_SEQUENCE_SIZE).toString(ENCODING_STYLE);
 };
 
 // checkPassword

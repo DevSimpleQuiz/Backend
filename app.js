@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
+const errorMiddleware = require("./src/middlewares/errorMiddleware");
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
@@ -18,8 +19,10 @@ app.use("/users", userRouter);
 app.use("/quiz-result", quizRouter); // quizRoutes를 method만으로 구분 중이라 분리 필요
 app.use("/quiz", quizRouter);
 
-// app.use(errorHandler)
+app.use(errorMiddleware);
 
 app.listen(PORT, () => {
+  const currentTime = new Date();
+  console.log(`Server started at: ${currentTime.toISOString()}`);
   console.log(`Server is on ${PORT}`);
 });

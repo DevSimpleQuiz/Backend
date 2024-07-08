@@ -1,22 +1,17 @@
+// src/controllers/userController.js
 const { StatusCodes } = require("http-status-codes"); // statud code 모듈
-const crypto = require("crypto");
 const createError = require("http-errors");
+const jwt = require("jsonwebtoken");
 const connection = require("../db/mysqldb"); // db 모듈
 const userQuery = require("../queries/userQuery.js");
 
-const {
-  SALT_BYTE_SEQUENCE_SIZE,
-  HASH_REPEAT_TIMES,
-  DIGEST_ALGORITHM,
-  ENCODING_STYLE,
-} = require("../constant/constant.js");
 const {
   convertHashPassword,
   generateSalt,
 } = require("../services/userService.js");
 const { verifyToken } = require("../services/jwtService.js");
 
-const join = async (req, res) => {
+const join = async (req, res, next) => {
   const { id, password } = req.body;
 
   // id 중복 확인
@@ -30,42 +25,24 @@ const join = async (req, res) => {
       });
     }
   } catch (err) {
-    console.error(err);
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: "Internal Server Error" });
+    next(err);
   }
 
   // 암호화된 비밀번호와 salt 값을 같이 DB에 저장
   try {
-    const salt = crypto
-      .randomBytes(SALT_BYTE_SEQUENCE_SIZE)
-      .toString(ENCODING_STYLE);
-
-    const hashPassword = crypto
-      .pbkdf2Sync(
-        password,
-        salt,
-        HASH_REPEAT_TIMES,
-        SALT_BYTE_SEQUENCE_SIZE,
-        DIGEST_ALGORITHM
-      )
-      .toString(ENCODING_STYLE);
-
-    let values = [id, hashPassword, salt];
+    const salt = generateSalt();
+    const hashPassword = convertHashPassword(password, salt);
+    const values = [id, hashPassword, salt];
 
     await connection.query(userQuery.join, values);
 
     return res.status(StatusCodes.CREATED).json({ message: "OK" });
   } catch (err) {
-    console.error("insert error ", err);
-    return res
-      .status(StatusCodes.CONFLICT)
-      .json({ message: "Internal Server Error" });
+    next(err);
   }
 };
 
-const checkLoginId = async (req, res) => {
+const checkLoginId = async (req, res, next) => {
   const { id } = req.body;
   // id 중복 확인
   try {
@@ -79,47 +56,33 @@ const checkLoginId = async (req, res) => {
     }
     return res.status(StatusCodes.OK).json(results);
   } catch (err) {
-    console.error(err);
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: "Internal Server Error" });
+    next(err);
   }
 };
 
 /**
  * login한 상태인지 미들웨어에서 확인 필요
  */
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { id, password } = req.body;
 
   try {
-    const getUserPasswordInfoResult = await connection.query(
-      userQuery.getUserPasswordInfo,
-      id
-    );
+    const getUserInfoResult = await connection.query(userQuery.getUserInfo, id);
 
-    const loginUser = getUserPasswordInfoResult[0][0];
+    const loginUser = getUserInfoResult[0][0];
 
     if (loginUser) {
-      const hashPassword = crypto
-        .pbkdf2Sync(
-          password,
-          loginUser.salt,
-          HASH_REPEAT_TIMES,
-          SALT_BYTE_SEQUENCE_SIZE,
-          "sha512"
-        )
-        .toString(ENCODING_STYLE);
-      // => 디비 비밀번호랑 비교
-      if (loginUser.password == hashPassword) {
+      const hashPassword = convertHashPassword(password, loginUser.salt);
+
+      if (loginUser.password === hashPassword) {
         // 토큰 발행
         const token = jwt.sign(
           {
-            id: loginUser.id,
+            id: loginUser.user_id,
           },
-          process.env.PRIVATE_KEY,
+          process.env.JWT_PRIVATE_KEY,
           {
-            expiresIn: "1m",
+            expiresIn: process.env.TOKEN_EXPIRED_TIME,
             issuer: "DevSimQuiz",
           }
         );
@@ -127,6 +90,7 @@ const login = async (req, res) => {
         // 토큰 쿠키에 담기
         res.cookie("token", token, {
           httpOnly: true,
+          sameStie: "strict",
         });
 
         return res.status(StatusCodes.NO_CONTENT).end();
@@ -140,17 +104,23 @@ const login = async (req, res) => {
       message: "잘못된 아이디, 비밀번호를 입니다.",
     });
   } catch (err) {
-    console.error(err);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR, {
-      message: "Internal Server Error",
-    });
+    next(err);
+  }
+};
+
+const logout = async (req, res, next) => {
+  try {
+    await res.clearCookie("token", { httpOnly: true });
+    return res.status(StatusCodes.NO_CONTENT).end();
+  } catch (err) {
+    next(err);
   }
 };
 
 /**
  * 현재 비밀번호를 제대로 입력헀는지 확인한다.
  */
-const isCurrentPassword = async (req, res) => {
+const isCurrentPassword = async (req, res, next) => {
   const { password } = req.body;
   const token = req.cookies.token;
 
@@ -164,9 +134,6 @@ const isCurrentPassword = async (req, res) => {
 
     const payload = await verifyToken(token);
     const userId = payload.id;
-
-    console.log("userId : ", userId);
-
     const getUserPasswordInfoResult = await connection.query(
       userQuery.getUserPasswordInfo,
       userId
@@ -180,27 +147,28 @@ const isCurrentPassword = async (req, res) => {
       );
     }
 
-    const hashPassword = convertHashPassword(password, generateSalt());
+    const hashPassword = convertHashPassword(password, loginUser.salt);
 
-    if (loginUser.password !== hashPassword) {
-      throw createError(
-        StatusCodes.UNAUTHORIZED,
-        "비밀번호가 일치하지 않습니다."
-      );
+    if (loginUser.password === hashPassword) {
+      return res.status(StatusCodes.OK).json({
+        success: true,
+      });
+    } else {
+      return res.status(StatusCodes.OK).json({
+        success: false,
+        message: "비밀번호가 틀렸습니다.",
+      });
     }
-    return res.status(StatusCodes.NO_CONTENT).end();
-  } catch (error) {
-    // return res
-    //   .status(StatusCodes.INTERNAL_SERVER_ERROR)
-    //   .json({ message: "Internal Server Error" });
-    next(error); // 에러를 미들웨어로 전달
+  } catch (err) {
+    next(err);
   }
 };
 
 /**
  * 현재 비밀번호와 이전 비밀번호가 다른지 비교한다.
+ * TODO: 다른 추가 검증이 필요한지 생각 및 조사
  */
-const isAvailablePassword = async (req, res) => {
+const isAvailablePassword = async (req, res, next) => {
   const { password, newPassword } = req.body;
   let result;
 
@@ -221,15 +189,64 @@ const isAvailablePassword = async (req, res) => {
  * 현재 비밀번호가 맞는지 확인,
  * 변경 비밀번호와 현재 비밀번호가 다른지 확인
  */
-const passwordReset = (req, res) => {
-  // return re
+const resetPassword = async (req, res, next) => {
+  const { password, newPassword } = req.body;
+  const token = req.cookies.token;
+
+  try {
+    if (!token) {
+      throw createError(
+        StatusCodes.FORBIDDEN,
+        "인증받지 않은 사용자입니다. 로그인 해주세요."
+      );
+    }
+
+    const payload = await verifyToken(token);
+    const userId = payload.id;
+    const getUserPasswordInfoResult = await connection.query(
+      userQuery.getUserPasswordInfo,
+      userId
+    );
+    const loginUser = getUserPasswordInfoResult[0][0];
+
+    if (!loginUser) {
+      throw createError(
+        StatusCodes.NOT_FOUND,
+        "사용자 정보를 찾을 수 없습니다."
+      );
+    }
+
+    const hashPassword = convertHashPassword(password, loginUser.salt);
+
+    if (loginUser.password === hashPassword) {
+      if (password === newPassword) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: "현재 비밀번호와 같은 비밀번호는 사용할 수 없습니다.",
+        });
+      }
+      const salt = generateSalt();
+      const hashNewPassword = convertHashPassword(newPassword, salt);
+      const values = [hashNewPassword, salt, userId];
+
+      await connection.query(userQuery.resetPassword, values);
+
+      return res.status(StatusCodes.NO_CONTENT).end();
+    } else {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "비밀번호가 틀렸습니다.",
+      });
+    }
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = {
   join,
   checkLoginId,
   login,
+  logout,
   isCurrentPassword,
   isAvailablePassword,
-  passwordReset,
+  resetPassword,
 };

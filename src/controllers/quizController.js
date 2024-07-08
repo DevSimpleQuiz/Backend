@@ -25,14 +25,14 @@ const generateQuiz = (req, res) => {
  * Socore에서 찾아서 값 저장
  */
 // 퀴즈 결과 생성, 로그인한 유저만 가능(미들웨어 처리)
-const handleQuizResult = (req, res) => {
+const handleQuizResult = async (req, res) => {
   const { totalQuizCount, solvedQuizCount, totalQuizScore } = req.body;
 
   const token = req.cookies.token;
 
   let payload;
 
-  jwt.verify(token, process.env.PRIVATE_KEY, (err, decoded) => {
+  await jwt.verify(token, process.env.JWT_PRIVATE_KEY, (err, decoded) => {
     if (err) {
       return res.status(StatusCodes.FORBIDDEN).end();
     }
