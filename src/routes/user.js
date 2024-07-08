@@ -16,7 +16,7 @@ const {
   checkLoginId,
   login,
   logout,
-  isAvailablePassword, // naming 결 고려
+  isAvailablePassword,
   isCurrentPassword,
   resetPassword,
 } = require("../controllers/userController");
@@ -51,9 +51,6 @@ router.post(
   login
 );
 
-/**
- * TODO
- */
 // 로그아웃 처리
 router.post("/logout", isAuthenticated, logout);
 

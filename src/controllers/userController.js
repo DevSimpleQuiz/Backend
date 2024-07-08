@@ -125,13 +125,6 @@ const isCurrentPassword = async (req, res, next) => {
   const token = req.cookies.token;
 
   try {
-    if (!token) {
-      throw createError(
-        StatusCodes.FORBIDDEN,
-        "인증받지 않은 사용자입니다. 로그인 해주세요."
-      );
-    }
-
     const payload = await verifyToken(token);
     const userId = payload.id;
     const getUserPasswordInfoResult = await connection.query(
@@ -194,13 +187,6 @@ const resetPassword = async (req, res, next) => {
   const token = req.cookies.token;
 
   try {
-    if (!token) {
-      throw createError(
-        StatusCodes.FORBIDDEN,
-        "인증받지 않은 사용자입니다. 로그인 해주세요."
-      );
-    }
-
     const payload = await verifyToken(token);
     const userId = payload.id;
     const getUserPasswordInfoResult = await connection.query(
