@@ -34,19 +34,5 @@ CREATE TABLE score (
     total_score INT NOT NULL DEFAULT 0,
     modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES user(user_id)
+    FOREIGN KEY (user_id) REFERENCES user(id)
 );
-
-
--- 기존 테이블 속성에서 user_id 속성을 UNIQUE로 설정
-ALTER TABLE `user`
-ADD CONSTRAINT `user_id`
-UNIQUE (`user_id`);
-
-ALTER TABLE `quiz`
-ADD CONSTRAINT `word`
-UNIQUE (`word`);
-
-ALTER TABLE `score`
-ADD CONSTRAINT `user_id`
-UNIQUE (`user_id`);
