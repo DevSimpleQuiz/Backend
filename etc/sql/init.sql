@@ -1,3 +1,6 @@
+-- 기존 데이터베이스 제거
+DROP DATABASE devsimplequiz;
+
 -- 데이터베이스 생성
 CREATE DATABASE devsimplequiz;
 
@@ -35,11 +38,10 @@ CREATE TABLE score (
 );
 
 
--- user_id 속성을 UNIQUE로 설정
+-- 기존 테이블 속성에서 user_id 속성을 UNIQUE로 설정
 ALTER TABLE `user`
 ADD CONSTRAINT `user_id`
 UNIQUE (`user_id`);
-
 
 ALTER TABLE `quiz`
 ADD CONSTRAINT `word`

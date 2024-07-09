@@ -30,7 +30,6 @@ const quizValidators = {
       .withMessage("응시한 문제 수가 비어 있을 수 없습니다.")
       .isInt({ min: 0 })
       .withMessage("응시한 문제 수가 0 이상의 정수여야 합니다.")
-      .bail()
       .custom(ensureInt)
       .withMessage("응시한 문제 수는 문자열이 아닌 정수여야 합니다."),
     body("solvedQuizCount")
@@ -41,7 +40,13 @@ const quizValidators = {
       .custom(ensureInt)
       .withMessage("맞춘 문제 수는 문자열이 아닌 정수여야 합니다.")
       .isInt({ min: 0 })
-      .withMessage("맞춘 문제 수는 0 이상의 정수여야 합니다."),
+      .withMessage("맞춘 문제 수는 0 이상의 정수여야 합니다.")
+      .custom((value, { req }) => {
+        if (parseInt(value, 10) > parseInt(req.body.totalQuizCount, 10)) {
+          throw new Error("맞춘 문제 수는 응시한 문제 수보다 클 수 없습니다.");
+        }
+        return true;
+      }),
     body("totalQuizScore")
       .exists()
       .withMessage("맞춘 총 점수가 존재해야 합니다.")

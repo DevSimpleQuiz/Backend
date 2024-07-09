@@ -52,9 +52,6 @@ const checkLoginId = async (req, res, next) => {
   }
 };
 
-/**
- * login한 상태인지 미들웨어에서 확인 필요
- */
 const login = async (req, res, next) => {
   try {
     const { id, password } = req.body;
@@ -108,7 +105,7 @@ const logout = async (req, res, next) => {
 };
 
 /**
- * 현재 비밀번호를 제대로 입력헀는지 확인한다.
+ * 현재 비밀번호를 제대로 입력헀는지 확인
  */
 const isCurrentPassword = async (req, res, next) => {
   try {
@@ -148,7 +145,7 @@ const isCurrentPassword = async (req, res, next) => {
 };
 
 /**
- * 현재 비밀번호와 이전 비밀번호가 다른지 비교한다.
+ * 현재 비밀번호와 이전 비밀번호가 다른지 비교
  */
 const isAvailablePassword = async (req, res, next) => {
   try {
