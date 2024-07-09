@@ -1,10 +1,5 @@
 const { validationResult } = require("express-validator");
 const userValidators = require("./userValidators");
-const {
-  isAuthenticated,
-  isNotAuthenticated,
-} = require("../middlewares/authMiddleware");
-
 const mockReq = (body) => ({ body });
 
 const mockRes = () => {
@@ -112,8 +107,6 @@ describe("User Validators", () => {
         mockReq({ password: "short   " }), // 짧은 문자 + 공백
         mockReq({ password: "V12345678 0123456789" }), // 대문자 포함
         mockReq({ password: "......... " }),
-        // mockReq({ password: "0123456789@123456789" }), // 특수 문자 포함
-        // mockReq({ password: "0123456789123456789B" }), // 대문자 포함
       ];
 
       for (const message of mockRequestMessages) {

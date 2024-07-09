@@ -1,23 +1,20 @@
 const StatusCodes = require("http-status-codes");
 const jwt = require("jsonwebtoken"); // jwt 모듈
 const { loadData, generateQuizSet } = require("../quizGeneration/quizModule");
-const { accumulateScoreInfo, findScoreInfo } = require("../utils/util");
 
 (async () => {
   // 퀴즈용 엑셀 파일 로드, 최초 한번만 호출
   await loadData("data/words.xlsx");
 })();
 
-const generateQuiz = (req, res) => {
+// 랜덤 퀴즈 세트 생성
+const generateQuiz = (req, res, next) => {
   try {
-    // 랜덤 퀴즈 세트 생성
     const quizSet = generateQuizSet();
 
     return res.json(quizSet);
-  } catch (error) {
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: error.message });
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -41,16 +38,10 @@ const handleQuizResult = async (req, res) => {
   });
 
   const id = payload.id;
-  if (
-    accumulateScoreInfo(id, { totalQuizCount, solvedQuizCount, totalQuizScore })
-  ) {
-    scoreInfo = findScoreInfo(id);
-    return res.status(StatusCodes.OK).json({ scoreInfo });
-  } else {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "퀴즈 정보가 더 필요합니다." });
-  }
+
+  return res
+    .status(StatusCodes.UNAUTHORIZED)
+    .json({ message: "퀴즈 정보가 더 필요합니다." });
 };
 
 module.exports = {

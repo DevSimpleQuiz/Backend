@@ -1,4 +1,3 @@
-// src/routes/user.js
 const express = require("express");
 const validationMiddleware = require("../middlewares/validationMiddleware");
 const userValidators = require("../validators/userValidators");
@@ -51,9 +50,6 @@ router.post(
   login
 );
 
-/**
- * TODO
- */
 // 로그아웃 처리
 router.post("/logout", isAuthenticated, logout);
 

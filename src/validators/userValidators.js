@@ -1,4 +1,3 @@
-// src/validators/userValidators.js
 const { body } = require("express-validator");
 
 const userValidators = {

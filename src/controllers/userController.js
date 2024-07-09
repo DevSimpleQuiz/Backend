@@ -1,4 +1,3 @@
-// src/controllers/userController.js
 const { StatusCodes } = require("http-status-codes"); // statud code 모듈
 const createError = require("http-errors");
 const jwt = require("jsonwebtoken");
@@ -12,10 +11,8 @@ const {
 const { verifyToken } = require("../services/jwtService.js");
 
 const join = async (req, res, next) => {
-  const { id, password } = req.body;
-
-  // id 중복 확인
   try {
+    const { id, password } = req.body;
     const getUserIdResult = await connection.query(userQuery.getUserId, id);
     const userId = getUserIdResult[0][0];
 
@@ -24,12 +21,7 @@ const join = async (req, res, next) => {
         message: "이미 사용 중인 아이디입니다.",
       });
     }
-  } catch (err) {
-    next(err);
-  }
-
-  // 암호화된 비밀번호와 salt 값을 같이 DB에 저장
-  try {
+    // 암호화된 비밀번호와 salt 값을 같이 DB에 저장
     const salt = generateSalt();
     const hashPassword = convertHashPassword(password, salt);
     const values = [id, hashPassword, salt];
@@ -42,10 +34,10 @@ const join = async (req, res, next) => {
   }
 };
 
+// id 중복 확인
 const checkLoginId = async (req, res, next) => {
-  const { id } = req.body;
-  // id 중복 확인
   try {
+    const { id } = req.body;
     const getUserIdResult = await connection.query(userQuery.getUserId, id);
     const userId = getUserIdResult[0][0];
 
@@ -64,11 +56,9 @@ const checkLoginId = async (req, res, next) => {
  * login한 상태인지 미들웨어에서 확인 필요
  */
 const login = async (req, res, next) => {
-  const { id, password } = req.body;
-
   try {
+    const { id, password } = req.body;
     const getUserInfoResult = await connection.query(userQuery.getUserInfo, id);
-
     const loginUser = getUserInfoResult[0][0];
 
     if (loginUser) {
@@ -121,16 +111,9 @@ const logout = async (req, res, next) => {
  * 현재 비밀번호를 제대로 입력헀는지 확인한다.
  */
 const isCurrentPassword = async (req, res, next) => {
-  const { password } = req.body;
-  const token = req.cookies.token;
-
   try {
-    if (!token) {
-      throw createError(
-        StatusCodes.FORBIDDEN,
-        "인증받지 않은 사용자입니다. 로그인 해주세요."
-      );
-    }
+    const { password } = req.body;
+    const token = req.cookies.token;
 
     const payload = await verifyToken(token);
     const userId = payload.id;
@@ -166,23 +149,26 @@ const isCurrentPassword = async (req, res, next) => {
 
 /**
  * 현재 비밀번호와 이전 비밀번호가 다른지 비교한다.
- * TODO: 다른 추가 검증이 필요한지 생각 및 조사
  */
 const isAvailablePassword = async (req, res, next) => {
-  const { password, newPassword } = req.body;
-  let result;
+  try {
+    const { password, newPassword } = req.body;
+    let result;
 
-  if (password === newPassword) {
-    result = {
-      success: false,
-      message: "현재 비밀번호와 같은 비밀번호는 사용할 수 없습니다.",
-    };
-  } else {
-    result = {
-      success: true,
-    };
+    if (password === newPassword) {
+      result = {
+        success: false,
+        message: "현재 비밀번호와 같은 비밀번호는 사용할 수 없습니다.",
+      };
+    } else {
+      result = {
+        success: true,
+      };
+    }
+    return res.status(StatusCodes.OK).json(result);
+  } catch (err) {
+    next(err);
   }
-  return res.status(StatusCodes.OK).json(result);
 };
 
 /**
@@ -190,16 +176,9 @@ const isAvailablePassword = async (req, res, next) => {
  * 변경 비밀번호와 현재 비밀번호가 다른지 확인
  */
 const resetPassword = async (req, res, next) => {
-  const { password, newPassword } = req.body;
-  const token = req.cookies.token;
-
   try {
-    if (!token) {
-      throw createError(
-        StatusCodes.FORBIDDEN,
-        "인증받지 않은 사용자입니다. 로그인 해주세요."
-      );
-    }
+    const { password, newPassword } = req.body;
+    const token = req.cookies.token;
 
     const payload = await verifyToken(token);
     const userId = payload.id;
