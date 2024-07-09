@@ -5,6 +5,7 @@ const connection = require("../db/mysqldb");
 const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 
+// TODO: RDB 또는 REDIS로 전환
 (async () => {
   // 퀴즈용 엑셀 파일 로드, 최초 한번만 호출
   await loadData("data/words.xlsx");
@@ -12,7 +13,7 @@ const scoreQuery = require("../queries/scoreQuery.js");
 
 const generateQuiz = (req, res, next) => {
   try {
-    // 랜덤 퀴즈 세트 생성
+    // 퀴즈 세트 랜덤 생성
     const quizSet = generateQuizSet();
 
     return res.json(quizSet);
@@ -21,10 +22,6 @@ const generateQuiz = (req, res, next) => {
   }
 };
 
-/**
- * Socore에서 찾아서 값 저장
- */
-// 퀴즈 결과 생성, 로그인한 유저만 가능(미들웨어 처리)
 const saveQuizResult = async (req, res, next) => {
   try {
     let { totalQuizCount, solvedQuizCount, totalQuizScore } = req.body;

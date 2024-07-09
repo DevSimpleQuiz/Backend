@@ -7,13 +7,14 @@ const {
 } = require("../controllers/quizController");
 const trimMiddleware = require("../middlewares/trimMiddleware");
 const validationMiddleware = require("../middlewares/validationMiddleware");
+const quizValidators = require("../validators/quizValidators.js");
 
 router.get("/", generateQuiz);
 router.post(
   "/result",
   isAuthenticated,
   trimMiddleware,
-  // quizValidators.saveQuizResult,
+  quizValidators.saveQuizResult,
   validationMiddleware,
   saveQuizResult
 );

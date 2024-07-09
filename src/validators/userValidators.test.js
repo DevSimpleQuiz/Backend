@@ -1,9 +1,5 @@
 const { validationResult } = require("express-validator");
 const userValidators = require("./userValidators");
-const {
-  isAuthenticated,
-  isNotAuthenticated,
-} = require("../middlewares/authMiddleware");
 
 const mockReq = (body) => ({ body });
 
