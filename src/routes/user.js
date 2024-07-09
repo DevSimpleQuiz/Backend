@@ -15,7 +15,7 @@ const {
   checkLoginId,
   login,
   logout,
-  isAvailablePassword, // naming 결 고려
+  isAvailablePassword,
   isCurrentPassword,
   resetPassword,
 } = require("../controllers/userController");

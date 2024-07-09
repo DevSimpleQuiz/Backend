@@ -1,15 +1,19 @@
 const StatusCodes = require("http-status-codes");
-const jwt = require("jsonwebtoken"); // jwt 모듈
 const { loadData, generateQuizSet } = require("../quizGeneration/quizModule");
+const { verifyToken } = require("../services/jwtService.js");
+const connection = require("../db/mysqldb");
+const userQuery = require("../queries/userQuery.js");
+const scoreQuery = require("../queries/scoreQuery.js");
 
+// TODO: RDB 또는 REDIS로 전환
 (async () => {
   // 퀴즈용 엑셀 파일 로드, 최초 한번만 호출
   await loadData("data/words.xlsx");
 })();
 
-// 랜덤 퀴즈 세트 생성
 const generateQuiz = (req, res, next) => {
   try {
+    // 퀴즈 세트 랜덤 생성
     const quizSet = generateQuizSet();
 
     return res.json(quizSet);
@@ -18,33 +22,59 @@ const generateQuiz = (req, res, next) => {
   }
 };
 
-/**
- * Socore에서 찾아서 값 저장
- */
-// 퀴즈 결과 생성, 로그인한 유저만 가능(미들웨어 처리)
-const handleQuizResult = async (req, res) => {
-  const { totalQuizCount, solvedQuizCount, totalQuizScore } = req.body;
+const saveQuizResult = async (req, res, next) => {
+  try {
+    let { totalQuizCount, solvedQuizCount, totalQuizScore } = req.body;
+    const token = req.cookies.token;
+    const payload = await verifyToken(token);
+    const userId = payload.id;
 
-  const token = req.cookies.token;
+    const getUserIdResult = await connection.query(userQuery.getUserId, userId);
+    const userNumId = getUserIdResult[0][0]?.id;
 
-  let payload;
-
-  await jwt.verify(token, process.env.JWT_PRIVATE_KEY, (err, decoded) => {
-    if (err) {
-      return res.status(StatusCodes.FORBIDDEN).end();
+    if (!userNumId) {
+      throw createError(
+        StatusCodes.NOT_FOUND,
+        "사용자 정보를 찾을 수 없습니다."
+      );
     }
 
-    payload = decoded; // Save the decoded payload to the request object
-  });
+    const currentScoreInfoResult = await connection.query(
+      scoreQuery.getScoreInfo,
+      userNumId
+    );
 
-  const id = payload.id;
+    const currentScoreInfo = currentScoreInfoResult[0][0];
 
-  return res
-    .status(StatusCodes.UNAUTHORIZED)
-    .json({ message: "퀴즈 정보가 더 필요합니다." });
+    if (currentScoreInfo) {
+      totalQuizCount += currentScoreInfo["total_quiz_count"];
+      solvedQuizCount += currentScoreInfo["total_solved_count"];
+      totalQuizScore += currentScoreInfo["total_score"];
+
+      const values = [
+        totalQuizCount,
+        solvedQuizCount,
+        totalQuizScore,
+        userNumId,
+      ];
+      await connection.query(scoreQuery.updateScoreInfo, values);
+    } else {
+      const values = [
+        userNumId,
+        totalQuizCount,
+        solvedQuizCount,
+        totalQuizScore,
+      ];
+      await connection.query(scoreQuery.addScoreInfo, values);
+    }
+
+    return res.status(StatusCodes.NO_CONTENT).end();
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = {
   generateQuiz,
-  handleQuizResult,
+  saveQuizResult,
 };
