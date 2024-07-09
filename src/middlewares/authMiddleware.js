@@ -1,4 +1,3 @@
-// src/middleware/authMiddleware.js
 const createError = require("http-errors");
 const { StatusCodes } = require("http-status-codes");
 const { verifyToken } = require("../services/jwtService");
