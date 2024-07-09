@@ -1,4 +1,3 @@
-// src/routes/user.js
 const express = require("express");
 const validationMiddleware = require("../middlewares/validationMiddleware");
 const userValidators = require("../validators/userValidators");
