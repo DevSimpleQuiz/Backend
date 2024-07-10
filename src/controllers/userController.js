@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 const connection = require("../db/mysqldb"); // db 모듈
 const userQuery = require("../queries/userQuery.js");
 const { COOKIE_OPTION } = require("../constant/constant.js");
+const { gerRank } = require("../services/rankService.js");
+// const gerRank = require("../services/rankService.js");
 
 const {
   convertHashPassword,
@@ -224,6 +226,58 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+/**
+ * # TODO: 갯수가 많이 늘어나도 이렇게 정렬하고 값을 찾을 수 있는가?
+ * Data
+  {
+    "id": "jake",
+    "myRank": 6,      // 나의 순위
+    "solvedCount": 30// 지금까지 푼 문제 수
+  }
+ */
+const mypage = async (req, res, next) => {
+  try {
+    const token = req.cookies.token;
+    const payload = await verifyToken(token);
+    const userId = payload.id;
+    const getUserIdResult = await connection.query(userQuery.getUserId, userId);
+    const userNumId = getUserIdResult[0][0]?.id;
+
+    if (!userNumId) {
+      throw createError(
+        StatusCodes.NOT_FOUND,
+        "사용자 정보를 찾을 수 없습니다."
+      );
+    }
+
+    console.log(`userNumId : ${userNumId}`);
+
+    const myRankInfo = await gerRank(userNumId);
+
+    console.log(`myRankInfo : `, myRankInfo);
+
+    if (myRankInfo === -1) {
+      console.log("사용자 순위를 찾을 수 없습니다.");
+      throw createError(
+        StatusCodes.NOT_FOUND,
+        "사용자 순위를 찾을 수 없습니다."
+      );
+    }
+
+    const mypageInfo = {
+      id: userId,
+      myRank: myRankInfo["myRank"],
+      totalSolvedCount: myRankInfo["totalSolvedCount"],
+    };
+    console.log(`## mypageInfo : `, mypageInfo);
+
+    return res.status(StatusCodes.OK).json(mypageInfo);
+  } catch (err) {
+    console.error("# mypage error : ", err);
+    next(err);
+  }
+};
+
 module.exports = {
   join,
   checkLoginId,
@@ -232,4 +286,5 @@ module.exports = {
   isCurrentPassword,
   isAvailablePassword,
   resetPassword,
+  mypage,
 };
