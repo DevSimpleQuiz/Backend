@@ -50,7 +50,6 @@ router.post(
   login
 );
 
-// 로그아웃 처리
 router.post("/logout", isAuthenticated, logout);
 
 router.post(

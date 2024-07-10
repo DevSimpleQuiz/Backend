@@ -3,6 +3,7 @@ const createError = require("http-errors");
 const jwt = require("jsonwebtoken");
 const connection = require("../db/mysqldb"); // db 모듈
 const userQuery = require("../queries/userQuery.js");
+const { COOKIE_OPTION } = require("../constant/constant.js");
 
 const {
   convertHashPassword,
@@ -17,6 +18,7 @@ const join = async (req, res, next) => {
     const userId = getUserIdResult[0][0];
 
     if (userId) {
+      console.log(`${id}는 이미 사용 중인 아이디입니다. : `);
       return res.status(StatusCodes.CONFLICT).json({
         message: "이미 사용 중인 아이디입니다.",
       });
@@ -28,6 +30,7 @@ const join = async (req, res, next) => {
 
     await connection.query(userQuery.join, values);
 
+    console.log("회원가입 성공 id : ", id);
     return res.status(StatusCodes.CREATED).json({ message: "OK" });
   } catch (err) {
     next(err);
@@ -75,18 +78,18 @@ const login = async (req, res, next) => {
         );
 
         // 토큰 쿠키에 담기
-        res.cookie("token", token, {
-          httpOnly: true,
-          sameStie: "strict",
-        });
+        res.cookie("token", token, COOKIE_OPTION);
+        console.log("로그인, access token 발급 성공");
 
         return res.status(StatusCodes.NO_CONTENT).end();
       } else {
+        console.log("로그인, 잘못된 아이디, 비밀번호를 입니다.");
         return res.status(StatusCodes.UNAUTHORIZED).json({
           message: "잘못된 아이디, 비밀번호를 입니다.",
         });
       }
     }
+    console.log("로그인, 잘못된 아이디, 비밀번호를 입니다.");
     return res.status(StatusCodes.UNAUTHORIZED).json({
       message: "잘못된 아이디, 비밀번호를 입니다.",
     });
@@ -97,8 +100,9 @@ const login = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
   try {
-    await res.clearCookie("token", { httpOnly: true });
-    return res.status(StatusCodes.NO_CONTENT).end();
+    await res.clearCookie("token", COOKIE_OPTION);
+    console.log("로그아웃");
+    res.status(StatusCodes.NO_CONTENT).end();
   } catch (err) {
     next(err);
   }
@@ -205,9 +209,12 @@ const resetPassword = async (req, res, next) => {
       const values = [hashNewPassword, salt, userId];
 
       await connection.query(userQuery.resetPassword, values);
-
+      console.log("비밀번호 변경 완료");
+      // TODO: 쿠키 삭제방식 통일, maxAge 바꾸는 형태로 테스트
+      res.cookie("token", "", { maxAge: 0 });
       return res.status(StatusCodes.NO_CONTENT).end();
     } else {
+      console.log("비밀번호 변경 실패");
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: "비밀번호가 틀렸습니다.",
       });
