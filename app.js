@@ -5,7 +5,7 @@ const errorMiddleware = require("./src/middlewares/errorMiddleware");
 const cors = require("cors");
 
 dotenv.config();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4242;
 
 const corsOptions = {
   origin: `http://${process.env.CORS_HOST}:${process.env.CORS_PORT}`,
