@@ -23,7 +23,7 @@ const findMyRank = async (scoreInfos, userId) => {
  */
 const gerRankInfo = async (myUserId) => {
   try {
-    const queryResult = await pool.query(scoreQuery.getAllScoreInfo);
+    const queryResult = await pool.query(scoreQuery.getAllrankInfo);
 
     const scoreInfos = queryResult[0];
     const myRank = await findMyRank(scoreInfos, myUserId);

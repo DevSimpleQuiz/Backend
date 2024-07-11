@@ -27,10 +27,12 @@ app.use(cors(corsOptions));
 
 const userRouter = require("./src/routes/user");
 const quizRouter = require("./src/routes/quiz");
+const rankRouter = require("./src/routes/rank");
 
 // logout 구현
 app.use("/users", userRouter);
 app.use("/quiz", quizRouter);
+app.use("/rank", rankRouter);
 
 // error handler
 app.use(errorMiddleware);
