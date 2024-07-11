@@ -18,6 +18,7 @@ const {
   isAvailablePassword,
   isCurrentPassword,
   resetPassword,
+  mypage,
 } = require("../controllers/userController");
 
 router.post(
@@ -70,6 +71,8 @@ router.post(
   validationMiddleware,
   isAvailablePassword
 );
+
+router.get("/mypage", isAuthenticated, mypage);
 
 router.put(
   "/password",
