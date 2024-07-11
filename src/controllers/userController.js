@@ -1,11 +1,11 @@
 const { StatusCodes } = require("http-status-codes"); // statud code 모듈
-const createError = require("http-errors");
 const jwt = require("jsonwebtoken");
-const connection = require("../db/mysqldb"); // db 모듈
+const createHttpError = require("http-errors");
+const pool = require("../db/mysqldb"); // db 모듈
 const userQuery = require("../queries/userQuery.js");
+const scoreQuery = require("../queries/scoreQuery.js");
 const { COOKIE_OPTION } = require("../constant/constant.js");
-const { gerRank } = require("../services/rankService.js");
-// const gerRank = require("../services/rankService.js");
+const { gerRankInfo } = require("../services/rankService.js");
 
 const {
   convertHashPassword,
@@ -16,7 +16,7 @@ const { verifyToken } = require("../services/jwtService.js");
 const join = async (req, res, next) => {
   try {
     const { id, password } = req.body;
-    const getUserIdResult = await connection.query(userQuery.getUserId, id);
+    const getUserIdResult = await pool.query(userQuery.getUserId, id);
     const userId = getUserIdResult[0][0];
 
     if (userId) {
@@ -30,11 +30,34 @@ const join = async (req, res, next) => {
     const hashPassword = convertHashPassword(password, salt);
     const values = [id, hashPassword, salt];
 
-    await connection.query(userQuery.join, values);
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.query(userQuery.join, values);
 
-    console.log("회원가입 성공 id : ", id);
+      const newUserIdResult = await connection.query(userQuery.getUserId, id);
+      const newUserId = newUserIdResult[0][0]?.id;
+      if (!newUserId) {
+        console.log("Fatal: 방금 추가한 유저의 아이디를 찾을 수 없습니다!!!");
+        throw createHttpError(
+          StatusCodes.NOT_FOUND,
+          "사용자 정보를 찾을 수 없습니다."
+        );
+      }
+      await connection.query(scoreQuery.addScoreInfo, newUserId);
+      await connection.commit();
+    } catch (err) {
+      console.error("회원가입 트렌젝션 쿼리 에러 ,", err);
+      await connection.rollback();
+      next(err);
+    } finally {
+      connection.release();
+    }
+
+    console.log(`${id} 회원가입 성공`);
     return res.status(StatusCodes.CREATED).json({ message: "OK" });
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
@@ -43,16 +66,17 @@ const join = async (req, res, next) => {
 const checkLoginId = async (req, res, next) => {
   try {
     const { id } = req.body;
-    const getUserIdResult = await connection.query(userQuery.getUserId, id);
+    const getUserIdResult = await pool.query(userQuery.getUserId, id);
     const userId = getUserIdResult[0][0];
 
     if (userId) {
-      results = { isDulicated: true };
+      results = { isDuplicated: true };
     } else {
-      results = { isDulicated: false };
+      results = { isDuplicated: false };
     }
     return res.status(StatusCodes.OK).json(results);
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
@@ -60,7 +84,7 @@ const checkLoginId = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { id, password } = req.body;
-    const getUserInfoResult = await connection.query(userQuery.getUserInfo, id);
+    const getUserInfoResult = await pool.query(userQuery.getUserInfo, id);
     const loginUser = getUserInfoResult[0][0];
 
     if (loginUser) {
@@ -96,6 +120,7 @@ const login = async (req, res, next) => {
       message: "잘못된 아이디, 비밀번호를 입니다.",
     });
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
@@ -106,6 +131,7 @@ const logout = async (req, res, next) => {
     console.log("로그아웃");
     res.status(StatusCodes.NO_CONTENT).end();
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
@@ -120,14 +146,14 @@ const isCurrentPassword = async (req, res, next) => {
 
     const payload = await verifyToken(token);
     const userId = payload.id;
-    const getUserPasswordInfoResult = await connection.query(
+    const getUserPasswordInfoResult = await pool.query(
       userQuery.getUserPasswordInfo,
       userId
     );
     const loginUser = getUserPasswordInfoResult[0][0];
 
     if (!loginUser) {
-      throw createError(
+      throw createHttpError(
         StatusCodes.NOT_FOUND,
         "사용자 정보를 찾을 수 없습니다."
       );
@@ -146,6 +172,7 @@ const isCurrentPassword = async (req, res, next) => {
       });
     }
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
@@ -170,6 +197,7 @@ const isAvailablePassword = async (req, res, next) => {
     }
     return res.status(StatusCodes.OK).json(result);
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
@@ -185,14 +213,14 @@ const resetPassword = async (req, res, next) => {
 
     const payload = await verifyToken(token);
     const userId = payload.id;
-    const getUserPasswordInfoResult = await connection.query(
+    const getUserPasswordInfoResult = await pool.query(
       userQuery.getUserPasswordInfo,
       userId
     );
     const loginUser = getUserPasswordInfoResult[0][0];
 
     if (!loginUser) {
-      throw createError(
+      throw createHttpError(
         StatusCodes.NOT_FOUND,
         "사용자 정보를 찾을 수 없습니다."
       );
@@ -210,7 +238,7 @@ const resetPassword = async (req, res, next) => {
       const hashNewPassword = convertHashPassword(newPassword, salt);
       const values = [hashNewPassword, salt, userId];
 
-      await connection.query(userQuery.resetPassword, values);
+      await pool.query(userQuery.resetPassword, values);
       console.log("비밀번호 변경 완료");
       // TODO: 쿠키 삭제방식 통일, maxAge 바꾸는 형태로 테스트
       res.cookie("token", "", { maxAge: 0 });
@@ -222,6 +250,7 @@ const resetPassword = async (req, res, next) => {
       });
     }
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
@@ -240,24 +269,21 @@ const mypage = async (req, res, next) => {
     const token = req.cookies.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
-    const getUserIdResult = await connection.query(userQuery.getUserId, userId);
+    const getUserIdResult = await pool.query(userQuery.getUserId, userId);
     const userNumId = getUserIdResult[0][0]?.id;
 
     if (!userNumId) {
-      throw createError(
+      throw createHttpError(
         StatusCodes.NOT_FOUND,
         "사용자 정보를 찾을 수 없습니다."
       );
     }
 
-    console.log(`userNumId : ${userNumId}`);
-
-    const myRankInfo = await gerRank(userNumId);
-    console.log(`myRankInfo : `, myRankInfo);
+    const myRankInfo = await gerRankInfo(userNumId);
 
     if (myRankInfo === -1) {
       console.log("사용자 순위를 찾을 수 없습니다.");
-      throw createError(
+      throw createHttpError(
         StatusCodes.NOT_FOUND,
         "사용자 순위를 찾을 수 없습니다."
       );
@@ -268,7 +294,7 @@ const mypage = async (req, res, next) => {
       myRank: myRankInfo["myRank"],
       totalSolvedCount: myRankInfo["totalSolvedCount"],
     };
-    console.log(`# mypageInfo : `, mypageInfo);
+    console.log(`mypageInfo : `, mypageInfo);
 
     return res.status(StatusCodes.OK).json(mypageInfo);
   } catch (err) {
