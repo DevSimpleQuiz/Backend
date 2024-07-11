@@ -1,7 +1,7 @@
 const StatusCodes = require("http-status-codes");
 const { loadData, generateQuizSet } = require("../quizGeneration/quizModule");
 const { verifyToken } = require("../services/jwtService.js");
-const connection = require("../db/mysqldb");
+const pool = require("../db/mysqldb");
 const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 
@@ -29,17 +29,17 @@ const saveQuizResult = async (req, res, next) => {
     const payload = await verifyToken(token);
     const userId = payload.id;
 
-    const getUserIdResult = await connection.query(userQuery.getUserId, userId);
+    const getUserIdResult = await pool.query(userQuery.getUserId, userId);
     const userNumId = getUserIdResult[0][0]?.id;
 
     if (!userNumId) {
-      throw createError(
+      throw createHttpError(
         StatusCodes.NOT_FOUND,
         "사용자 정보를 찾을 수 없습니다."
       );
     }
 
-    const currentScoreInfoResult = await connection.query(
+    const currentScoreInfoResult = await pool.query(
       scoreQuery.getScoreInfo,
       userNumId
     );
@@ -57,15 +57,9 @@ const saveQuizResult = async (req, res, next) => {
         totalQuizScore,
         userNumId,
       ];
-      await connection.query(scoreQuery.updateScoreInfo, values);
+      await pool.query(scoreQuery.updateScoreInfo, values);
     } else {
-      const values = [
-        userNumId,
-        totalQuizCount,
-        solvedQuizCount,
-        totalQuizScore,
-      ];
-      await connection.query(scoreQuery.addScoreInfo, values);
+      // 회원 가입할 때 추가하므로 여기서 없으면 error 여야 한다.
     }
 
     return res.status(StatusCodes.NO_CONTENT).end();

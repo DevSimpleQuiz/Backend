@@ -1,16 +1,9 @@
 const createHttpError = require("http-errors");
-const connection = require("../db/mysqldb.js");
+const pool = require("../db/mysqldb.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 const { StatusCodes } = require("http-status-codes");
 
-/*
-  [
-    { user_id: 4, total_score: 360 },
-    { user_id: 1, total_score: 270 },
-    { user_id: 5, total_score: 90 }
-  ],
-*/
-const findMyRank = (scoreInfos, userId) => {
+const findMyRank = async (scoreInfos, userId) => {
   if (!scoreInfos || scoreInfos.length === 0) {
     return -1;
   }
@@ -25,20 +18,19 @@ const findMyRank = (scoreInfos, userId) => {
 };
 
 /**
+ * 전체 순위 계산 이후,
  * 나의 순위 가져오기
- * 전체 순위 계산..
- *
- * SELECT user_id, total_score FROM score ORDER BY totaL_score DESC, user_id ASC;
- * SELECT * FROM 테이블명 ORDER BY 컬럼명1 ASC, 컬럼명2 DESC;
  */
-const gerRank = async (myUserId) => {
+const gerRankInfo = async (myUserId) => {
   try {
-    const queryResult = await connection.query(scoreQuery.getAllScoreInfo);
+    const queryResult = await pool.query(scoreQuery.getAllScoreInfo);
 
     const scoreInfos = queryResult[0];
-    const myRank = findMyRank(scoreInfos, myUserId);
+    const myRank = await findMyRank(scoreInfos, myUserId);
     // 아직 퀴즈를 풀지 않아서 데이터가 없는 경우.
+
     if (myRank === -1) {
+      console.log(`Fatal: ${myUserId}유저의 랭킹 정보를 찾을 수 없습니다.`);
       return {
         myRank: scoreInfos.length + 1,
         totalSolvedCount: 0,
@@ -59,4 +51,4 @@ const gerRank = async (myUserId) => {
   }
 };
 
-module.exports = { gerRank };
+module.exports = { gerRankInfo };

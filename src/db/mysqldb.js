@@ -1,10 +1,7 @@
 // mysql 모듈 소환
-const dotenv = require("dotenv");
 const mysqldb = require("mysql2/promise");
 
-dotenv.config();
-
-const connection = mysqldb.createPool({
+const pool = mysqldb.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -12,4 +9,4 @@ const connection = mysqldb.createPool({
   dateStrings: true,
 });
 
-module.exports = connection;
+module.exports = pool;

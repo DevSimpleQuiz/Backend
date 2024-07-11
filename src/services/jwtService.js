@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const createError = require("http-errors");
+const createHttpError = require("http-errors");
 const { StatusCodes } = require("http-status-codes");
 
 const verifyToken = async (token) => {
@@ -8,9 +8,9 @@ const verifyToken = async (token) => {
     return decoded;
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      throw createError(StatusCodes.UNAUTHORIZED, "토큰이 만료되었습니다.");
+      throw createHttpError(StatusCodes.UNAUTHORIZED, "토큰이 만료되었습니다.");
     } else {
-      throw createError(
+      throw createHttpError(
         StatusCodes.UNAUTHORIZED,
         "토큰 인증에 실패 하셨습니다."
       );
@@ -25,11 +25,11 @@ const verifyToken = async (token) => {
       if (err) {
         if (err.name === "TokenExpiredError") {
           reject(
-            createError(StatusCodes.UNAUTHORIZED, "토큰이 만료되었습니다.")
+            createHttpError(StatusCodes.UNAUTHORIZED, "토큰이 만료되었습니다.")
           );
         } else {
           reject(
-            createError(
+            createHttpError(
               StatusCodes.UNAUTHORIZED,
               "토큰 인증에 실패 하셨습니다."
             )
