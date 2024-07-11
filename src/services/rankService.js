@@ -34,24 +34,24 @@ const findMyRank = (scoreInfos, userId) => {
 const gerRank = async (myUserId) => {
   try {
     const queryResult = await connection.query(scoreQuery.getAllScoreInfo);
-    console.log(`queryResult : `, queryResult);
 
     const scoreInfos = queryResult[0];
-    console.log(`scoreInfos : `, scoreInfos);
-
     const myRank = findMyRank(scoreInfos, myUserId);
-    console.log(`myRank : `, myRank);
+    // 아직 퀴즈를 풀지 않아서 데이터가 없는 경우.
+    if (myRank === -1) {
+      return {
+        myRank: scoreInfos.length + 1,
+        totalSolvedCount: 0,
+      };
+    }
 
     const idx = myRank - 1;
-    scoreInfos[idx]["total_solved_count"];
-
-    const myRankInfo = {
+    return {
       myRank: myRank,
       totalSolvedCount: scoreInfos[idx]["total_solved_count"],
     };
-    console.log(`myRankInfo : `, myRankInfo);
-    return myRankInfo;
   } catch (err) {
+    console.error(err);
     throw createHttpError(
       StatusCodes.INTERNAL_SERVER_ERROR,
       "Internal Server Error"

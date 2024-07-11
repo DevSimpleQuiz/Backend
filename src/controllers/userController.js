@@ -253,7 +253,6 @@ const mypage = async (req, res, next) => {
     console.log(`userNumId : ${userNumId}`);
 
     const myRankInfo = await gerRank(userNumId);
-
     console.log(`myRankInfo : `, myRankInfo);
 
     if (myRankInfo === -1) {
@@ -269,7 +268,7 @@ const mypage = async (req, res, next) => {
       myRank: myRankInfo["myRank"],
       totalSolvedCount: myRankInfo["totalSolvedCount"],
     };
-    console.log(`## mypageInfo : `, mypageInfo);
+    console.log(`# mypageInfo : `, mypageInfo);
 
     return res.status(StatusCodes.OK).json(mypageInfo);
   } catch (err) {
