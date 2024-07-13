@@ -2,14 +2,15 @@ const createHttpError = require("http-errors");
 const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken");
 const { COOKIE_OPTION } = require("../constant/constant.js");
-// const { verifyToken } = require("../services/jwtService");
+const { verifyToken } = require("../services/jwtService");
 
 const isAuthenticated = (req, res, next) => {
-  const token = req.cookies.token;
+  const token = req.cookies?.token;
 
   if (!token) {
+    console.log("인증받지 않은 사용자입니다. 로그인 해주세요.");
     return next(
-      createError(
+      createHttpError(
         StatusCodes.FORBIDDEN,
         "인증받지 않은 사용자입니다. 로그인 해주세요."
       )
@@ -18,10 +19,13 @@ const isAuthenticated = (req, res, next) => {
 
   verifyToken(token)
     .then((payload) => {
+      // console.log("pa : ", req.user);
       req.user = payload; // 요청에 사용자 정보를 추가
+      console.log("req.user : ", req.user);
       next();
     })
     .catch((err) => {
+      console.error("err : ", err);
       next(err); // 토큰 관련 에러를 미들웨어 체인에 전달
     });
 };

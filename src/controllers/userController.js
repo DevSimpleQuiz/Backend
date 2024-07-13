@@ -266,7 +266,7 @@ const resetPassword = async (req, res, next) => {
  */
 const mypage = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    const token = req.cookies?.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
     const getUserIdResult = await pool.query(userQuery.getUserId, userId);

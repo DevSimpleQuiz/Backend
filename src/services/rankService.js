@@ -51,4 +51,4 @@ const gerRankInfo = async (myUserId) => {
   }
 };
 
-module.exports = { gerRankInfo };
+module.exports = { gerRankInfo, findMyRank };
