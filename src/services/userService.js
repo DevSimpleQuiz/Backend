@@ -11,7 +11,6 @@ const generateSalt = () => {
   return crypto.randomBytes(SALT_BYTE_SEQUENCE_SIZE).toString(ENCODING_STYLE);
 };
 
-// checkPassword
 const convertHashPassword = (password, salt) => {
   const hashPassword = crypto
     .pbkdf2Sync(

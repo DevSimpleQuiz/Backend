@@ -8,42 +8,11 @@ const scoreQuery = require("../queries/scoreQuery.js");
 /**
  * 랭킹 정보에 대한 응답 제공
  *
- * 나의 랭킹 및 스코어 데이터
- * top3랭커 정보
- * 나의 위아래 1명의 랭킹 정보
- *
- * TODO:
  * 0. 스코어 정보 가져오기
  * 1. 나의 랭킹 정보 구성(id, rank, total score, quiz count, sovled count)
  * 2. top3 랭커 정보 구성
  *   - top3인 유저의 id 정보 가져오기
  * 3. near3 랭커 정보 구성
- */
-
-/**
-{
-  "id": "jake",
-  "myRank": 3,
-  "totalQuizScore": 160,
-  "totalQuizCount": 20,
-  "solvedQuizCount": 16,
-  "topRankers": [
-	  {
-	    "id": "tom",
-	    "rank": 1
-	  },
-	  ...
-  ],
-  "topRankerCount": 3,
-  "nearRankers": [
-	  {
-	    "id": "jim",
-	    "rank": 2
-	  },
-	  ...
-  ],
-  "nearRankerCount": 3,
-}
  */
 const rankInfo = async (req, res, next) => {
   try {
@@ -95,7 +64,7 @@ const rankInfo = async (req, res, next) => {
     // 3. near3 랭커 정보 구성
     {
       // myScoreInfoIdx 인근 +- 1
-      // 내가 1등인 경우 1,2,3등,
+      // 내가 1등인 경우 1,2,3등
       // 내가 마지막 순위인 경우 내 위로 2단계 이전부터 시작
       let nearThreeUserNumIds = [];
       // 내가 1등인 경우

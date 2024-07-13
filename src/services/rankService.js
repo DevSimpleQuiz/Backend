@@ -33,14 +33,14 @@ const gerRankInfo = async (myUserId) => {
       console.log(`Fatal: ${myUserId}유저의 랭킹 정보를 찾을 수 없습니다.`);
       return {
         myRank: scoreInfos.length + 1,
-        totalSolvedCount: 0,
+        totalSolvedQuizCount: 0,
       };
     }
 
     const idx = myRank - 1;
     return {
       myRank: myRank,
-      totalSolvedCount: scoreInfos[idx]["total_solved_count"],
+      totalSolvedQuizCount: scoreInfos[idx]["total_solved_count"],
     };
   } catch (err) {
     console.error(err);

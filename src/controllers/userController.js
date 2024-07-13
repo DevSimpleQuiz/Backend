@@ -1,7 +1,7 @@
-const { StatusCodes } = require("http-status-codes"); // statud code 모듈
+const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken");
 const createHttpError = require("http-errors");
-const pool = require("../db/mysqldb"); // db 모듈
+const pool = require("../db/mysqldb");
 const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 const { COOKIE_OPTION } = require("../constant/constant.js");
@@ -292,7 +292,7 @@ const mypage = async (req, res, next) => {
     const mypageInfo = {
       id: userId,
       myRank: myRankInfo["myRank"],
-      totalSolvedCount: myRankInfo["totalSolvedCount"],
+      solvedCount: myRankInfo["solvedCount"],
     };
     console.log(`mypageInfo : `, mypageInfo);
 
