@@ -14,7 +14,7 @@ const findMyRank = async (scoreInfos, userId) => {
     }
   }
 
-  return -1; // userId가 배열에 없는 경우
+  return -1;
 };
 
 /**
@@ -27,20 +27,20 @@ const gerRankInfo = async (myUserId) => {
 
     const scoreInfos = queryResult[0];
     const myRank = await findMyRank(scoreInfos, myUserId);
-    // 아직 퀴즈를 풀지 않아서 데이터가 없는 경우.
 
+    // 아직 퀴즈를 풀지 않아서 데이터가 없는 경우.
     if (myRank === -1) {
       console.log(`Fatal: ${myUserId}유저의 랭킹 정보를 찾을 수 없습니다.`);
       return {
         myRank: scoreInfos.length + 1,
-        totalSolvedQuizCount: 0,
+        solvedCount: 0,
       };
     }
 
     const idx = myRank - 1;
     return {
       myRank: myRank,
-      totalSolvedQuizCount: scoreInfos[idx]["total_solved_count"],
+      solvedCount: scoreInfos[idx]["total_solved_count"],
     };
   } catch (err) {
     console.error(err);

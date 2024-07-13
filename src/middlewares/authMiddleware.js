@@ -2,7 +2,6 @@ const createHttpError = require("http-errors");
 const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken");
 const { COOKIE_OPTION } = require("../constant/constant.js");
-const { verifyToken } = require("../services/jwtService");
 
 const isAuthenticated = (req, res, next) => {
   const token = req.cookies?.token;
@@ -17,15 +16,28 @@ const isAuthenticated = (req, res, next) => {
     );
   }
 
-  verifyToken(token)
-    .then((payload) => {
-      req.user = payload;
+  jwt.verify(token, process.env.JWT_PRIVATE_KEY, (err, decoded) => {
+    if (err) {
+      if (err.name === "TokenExpiredError") {
+        // 토큰이 만료된 경우
+        res.clearCookie("token", COOKIE_OPTION);
+        console.log("토큰이 만료되었습니다.");
+        return next(
+          createHttpError(StatusCodes.UNAUTHORIZED, "토큰이 만료되었습니다.")
+        );
+      } else {
+        // 그 외의 인증 오류
+        console.log("인증에 실패했습니다.");
+        return next(
+          createHttpError(StatusCodes.UNAUTHORIZED, "인증에 실패했습니다.")
+        );
+      }
+    } else {
+      // 토큰이 유효한 경우, 이미 인증된 사용자
+      req.user = decoded;
       next();
-    })
-    .catch((err) => {
-      console.error("err : ", err);
-      next(err);
-    });
+    }
+  });
 };
 
 const isNotAuthenticated = (req, res, next) => {

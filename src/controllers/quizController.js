@@ -58,8 +58,6 @@ const saveQuizResult = async (req, res, next) => {
         userNumId,
       ];
       await pool.query(scoreQuery.updateScoreInfo, values);
-    } else {
-      // 회원 가입할 때 추가하므로 여기서 없으면 error 여야 한다.
     }
 
     return res.status(StatusCodes.NO_CONTENT).end();
