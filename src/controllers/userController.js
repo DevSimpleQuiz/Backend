@@ -298,7 +298,7 @@ const mypage = async (req, res, next) => {
 
     return res.status(StatusCodes.OK).json(mypageInfo);
   } catch (err) {
-    console.error("# mypage error : ", err);
+    console.error("mypage error : ", err);
     next(err);
   }
 };

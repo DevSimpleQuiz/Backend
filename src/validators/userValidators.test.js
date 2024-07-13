@@ -84,7 +84,6 @@ describe("User Validators", () => {
       ];
 
       for (const message of mockRequestMessages) {
-        console.log("message : ", message);
         const req = message;
         const res = mockRes();
 
@@ -110,7 +109,6 @@ describe("User Validators", () => {
       ];
 
       for (const message of mockRequestMessages) {
-        // console.log("message : ", message);
         const req = message;
         const res = mockRes();
 
