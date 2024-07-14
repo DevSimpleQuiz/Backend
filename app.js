@@ -7,16 +7,10 @@ const cors = require("cors");
 dotenv.config();
 const PORT = process.env.PORT || 4242;
 
-/**
- * No 'Access-Control-Allow-Origin'
- * header is present
- * on the requested resource.
- *
- */
 const corsOptions = {
   origin: `http://${process.env.CORS_HOST}:${process.env.CORS_PORT}`,
   credentials: true, // 쿠키와 같은 자격 증명 포함 요청 허용
-  optionSuccessStatus: 200, // 사전 요청 성공 상태 코드
+  optionSuccessStatus: 204, // 사전 요청 성공 상태 코드
 };
 
 app = express();
@@ -29,12 +23,10 @@ const userRouter = require("./src/routes/user");
 const quizRouter = require("./src/routes/quiz");
 const rankRouter = require("./src/routes/rank");
 
-// logout 구현
 app.use("/users", userRouter);
 app.use("/quiz", quizRouter);
 app.use("/rank", rankRouter);
 
-// error handler
 app.use(errorMiddleware);
 
 app.listen(PORT, () => {
