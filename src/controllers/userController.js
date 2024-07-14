@@ -20,7 +20,7 @@ const join = async (req, res, next) => {
     const userId = getUserIdResult[0][0];
 
     if (userId) {
-      console.log(`${id}는 이미 사용 중인 아이디입니다. : `);
+      console.log(`${id}는 이미 사용 중인 아이디입니다.`);
       return res.status(StatusCodes.CONFLICT).json({
         message: "이미 사용 중인 아이디입니다.",
       });
