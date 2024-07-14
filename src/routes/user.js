@@ -46,7 +46,6 @@ router.post(
   isNotAuthenticated,
   trimMiddleware,
   userValidators.id,
-  userValidators.password,
   validationMiddleware,
   login
 );
