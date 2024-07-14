@@ -8,6 +8,28 @@ const verifyToken = async (token) => {
     return decoded;
   } catch (err) {
     if (err.name === "TokenExpiredError") {
+      throw createHttpError(
+        StatusCodes.UNAUTHORIZED,
+        "토큰이 만료되었습니다.",
+        err
+      );
+    } else {
+      throw createHttpError(
+        StatusCodes.UNAUTHORIZED,
+        "토큰 인증에 실패 하셨습니다.",
+        err
+      );
+    }
+  }
+};
+
+/* 
+const verifyToken = async (token) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_PRIVATE_KEY);
+    return decoded;
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
       throw createHttpError(StatusCodes.UNAUTHORIZED, "토큰이 만료되었습니다.");
     } else {
       throw createHttpError(
@@ -17,6 +39,7 @@ const verifyToken = async (token) => {
     }
   }
 };
+*/
 
 /**
 const verifyToken = async (token) => {

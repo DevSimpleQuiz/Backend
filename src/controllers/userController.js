@@ -1,7 +1,7 @@
-const { StatusCodes } = require("http-status-codes"); // statud code 모듈
+const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken");
 const createHttpError = require("http-errors");
-const pool = require("../db/mysqldb"); // db 모듈
+const pool = require("../db/mysqldb");
 const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 const { COOKIE_OPTION } = require("../constant/constant.js");
@@ -266,7 +266,7 @@ const resetPassword = async (req, res, next) => {
  */
 const mypage = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    const token = req.cookies?.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
     const getUserIdResult = await pool.query(userQuery.getUserId, userId);
@@ -292,13 +292,13 @@ const mypage = async (req, res, next) => {
     const mypageInfo = {
       id: userId,
       myRank: myRankInfo["myRank"],
-      totalSolvedCount: myRankInfo["totalSolvedCount"],
+      solvedCount: myRankInfo["solvedCount"],
     };
     console.log(`mypageInfo : `, mypageInfo);
 
     return res.status(StatusCodes.OK).json(mypageInfo);
   } catch (err) {
-    console.error("# mypage error : ", err);
+    console.error("mypage error : ", err);
     next(err);
   }
 };
