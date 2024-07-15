@@ -30,7 +30,7 @@ const rankInfo = async (req, res, next) => {
     const getUserIdResult = await pool.query(userQuery.getUserId, userId);
     const userNumId = getUserIdResult[0][0]?.id;
     const myRank = await findMyRank(scoreInfos, userNumId);
-    result["myRank"] = myRank;
+    result["rank"] = myRank;
 
     const myScoreInfoIdx = myRank - 1;
 
@@ -55,7 +55,11 @@ const rankInfo = async (req, res, next) => {
       const userId = scoreInfos[idx].user_id;
       const userInfo = userInfos.find((user) => user.id === userId);
       if (userInfo) {
-        topUserRanks.push({ id: userInfo.user_id, rank: idx + 1 });
+        topUserRanks.push({
+          id: userInfo.user_id,
+          rank: idx + 1,
+          totalScore: scoreInfos[idx].total_score,
+        });
       }
     }
     result["topRankers"] = topUserRanks;
@@ -102,7 +106,11 @@ const rankInfo = async (req, res, next) => {
           const userId = scoreInfos[idx].user_id;
           const userInfo = userInfos.find((user) => user.id === userId);
           if (userInfo) {
-            nearThreRanks.push({ id: userInfo.user_id, rank: idx + 1 });
+            nearThreRanks.push({
+              id: userInfo.user_id,
+              rank: idx + 1,
+              totalScore: scoreInfos[idx].total_score,
+            });
           }
         }
         result["nearRankers"] = nearThreRanks;
