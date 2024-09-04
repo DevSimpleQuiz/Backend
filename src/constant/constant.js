@@ -3,7 +3,7 @@ const constants = {
   SALT_BYTE_SEQUENCE_SIZE: 32,
   DIGEST_ALGORITHM: "sha512",
   ENCODING_STYLE: "base64",
-  COOKIE_OPTION: { httpOnly: true, secure: false, sameStie: "None" },
+  COOKIE_OPTION: { httpOnly: true, secure: false, sameStie: "Lax" },
 };
 
 module.exports = constants;
