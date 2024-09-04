@@ -6,6 +6,8 @@ const { COOKIE_OPTION } = require("../constant/constant.js");
 const isAuthenticated = (req, res, next) => {
   const token = req.cookies?.token;
 
+  console.log("token : ", token);
+  console.log("req.cookies : ", req.cookies);
   if (!token) {
     console.log("인증받지 않은 사용자입니다. 로그인 해주세요.");
     return next(
