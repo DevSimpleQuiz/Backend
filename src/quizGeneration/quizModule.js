@@ -1,4 +1,6 @@
 const ExcelJS = require("exceljs");
+const pool = require("../db/mysqldb");
+const { WORD_QUIZ_TYPE } = require("../constant/constant");
 
 // 메모리에 퀴즈 데이터를 저장할 변수
 let data = [];
@@ -87,4 +89,40 @@ const generateQuizSet = () => {
   return { quizzes: selectedData };
 };
 
-module.exports = { loadData, generateQuizSet };
+const saveQuizDataToDatabase = async () => {
+  // 데이터가 존재하는지 확인
+
+  if (data.length === 0) {
+    throw new Error(
+      "데이터가 로드되지 않았습니다. loadData를 먼저 호출하세요."
+    );
+  }
+
+  const connection = await pool.getConnection(); // pool에서 연결 가져오기
+
+  try {
+    // 트랜젝션 시작
+    await connection.beginTransaction();
+
+    for (let item of data) {
+      const { word, definition, initialConstant } = item;
+      console.log(word, definition, initialConstant);
+
+      await connection.execute(
+        `INSERT INTO quiz (quiz_type, word, definition, initial_constant) VALUES (?, ?, ?, ?)`,
+        [WORD_QUIZ_TYPE, word, definition, initialConstant]
+      );
+    }
+
+    await connection.commit();
+
+    console.log("quiz 데이터 저장 성공");
+  } catch (error) {
+    await connection.rollback();
+    console.error("데이터 저장 중 오류 발생", error);
+  } finally {
+    connection.release();
+  }
+};
+
+module.exports = { loadData, generateQuizSet, saveQuizDataToDatabase };

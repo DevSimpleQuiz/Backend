@@ -4,6 +4,7 @@ const constants = {
   DIGEST_ALGORITHM: "sha512",
   ENCODING_STYLE: "base64",
   COOKIE_OPTION: { httpOnly: true, secure: true, sameStie: "strict" },
+  WORD_QUIZ_TYPE: 1,
 };
 
 module.exports = constants;
