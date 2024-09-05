@@ -94,7 +94,6 @@ const topThreeRankerInfo = async (scoreInfos) => {
 
   return {
     topRankers: topUserRanks,
-    topRankerCount: topUserRanks.length,
   };
 };
 
@@ -139,7 +138,6 @@ const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
     }
     return {
       nearRankers: nearThreRanks,
-      nearRankerCount: nearThreRanks.length,
     };
   }
 };
