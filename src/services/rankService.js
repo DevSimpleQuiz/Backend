@@ -87,20 +87,18 @@ const topThreeRankerInfo = async (scoreInfos) => {
       topUserRanks.push({
         id: userInfo.user_id,
         rank: idx + 1,
-        totalScore: scoreInfos[idx].total_score,
+        score: scoreInfos[idx].total_score,
       });
     }
   }
 
   return {
     topRankers: topUserRanks,
-    topRankerCount: topUserRanks.length,
   };
 };
 
 const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
   // myScoreInfoIdx 인근 +- 1
-  // console.log("myScoreInfoIdx : ", myScoreInfoIdx);
   // 내가 1등인 경우 1,2,3등
   // 내가 마지막 순위인 경우 내 위로 2단계 이전부터 시작
   let nearThreeUserNumIds = [];
@@ -134,13 +132,12 @@ const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
         nearThreRanks.push({
           id: userInfo.user_id,
           rank: idx + 1,
-          totalScore: scoreInfos[idx].total_score,
+          score: scoreInfos[idx].total_score,
         });
       }
     }
     return {
       nearRankers: nearThreRanks,
-      nearRankerCount: nearThreRanks.length,
     };
   }
 };
