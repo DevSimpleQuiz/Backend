@@ -1,7 +1,9 @@
 const ExcelJS = require("exceljs");
 const pool = require("../db/mysqldb");
 const { WORD_QUIZ_TYPE } = require("../constant/constant");
+const dotenv = require("dotenv");
 
+dotenv.config();
 // 메모리에 퀴즈 데이터를 저장할 변수
 let data = [];
 
@@ -101,12 +103,17 @@ const saveQuizDataToDatabase = async () => {
   const connection = await pool.getConnection(); // pool에서 연결 가져오기
 
   try {
+    const quiz_select_result = await connection.execute(
+      `SELECT COUNT(id) as COUNT 
+      FROM quiz`
+    );
+    const result_json = quiz_select_result[0][0];
+    if (result_json["COUNT"] > 0) return;
     // 트랜젝션 시작
     await connection.beginTransaction();
 
     for (let item of data) {
       const { word, definition, initialConstant } = item;
-      console.log(word, definition, initialConstant);
 
       await connection.execute(
         `INSERT INTO quiz (quiz_type, word, definition, initial_constant) VALUES (?, ?, ?, ?)`,
