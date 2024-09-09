@@ -77,18 +77,24 @@ const loadData = async (filePath) => {
   console.log("엑셀 데이터를 성공적으로 로드했습니다.");
 };
 
+/**
+ {
+		  "quizId": 42, 
+	    "definition": "집안 살림에 쓰는 기구. 주로 장롱",
+	    "initialConstant": "ㄱㅅ",
+	    "wordLength": 2,
+	    "answerInfo": {
+		    correctAnswersCount: 42,
+		    totalAttemptsUntilFirstCorrectAnswer: 219
+	    }
+    }
+ */
 // 랜덤으로 10개의 문제 생성 함수
-const generateQuizSet = () => {
-  if (data.length === 0) {
-    throw new Error(
-      "데이터가 로드되지 않았습니다. loadData를 먼저 호출하세요."
-    );
-  }
+const generateQuizSet = async () => {
+  const quizGeneratorQuery = `SELECT id AS quizId, word, initial_constant AS initialConstant, definition, LENGTH(word) AS wordLength FROM quiz ORDER BY RAND() LIMIT 10;`;
+  const selectedData = await pool.query(quizGeneratorQuery);
 
-  const shuffledData = data.sort(() => 0.5 - Math.random());
-  const selectedData = shuffledData.slice(0, 10);
-
-  return { quizzes: selectedData };
+  return { quizzes: selectedData[0] };
 };
 
 const saveQuizDataToDatabase = async () => {
@@ -105,7 +111,7 @@ const saveQuizDataToDatabase = async () => {
   try {
     const quiz_select_result = await connection.execute(
       `SELECT COUNT(id) as COUNT 
-      FROM quiz`
+        FROM quiz`
     );
     const result_json = quiz_select_result[0][0];
     if (result_json["COUNT"] > 0) return;

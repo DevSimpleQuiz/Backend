@@ -15,13 +15,23 @@ const scoreQuery = require("../queries/scoreQuery.js");
   await saveQuizDataToDatabase();
 })();
 
-const generateQuiz = (req, res, next) => {
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ * @returns
+ */
+const generateQuiz = async (req, res, next) => {
   try {
     // 퀴즈 세트 랜덤 생성
-    const quizSet = generateQuizSet();
+    const quizSet = await generateQuizSet();
+    console.log("## quizSet : ", quizSet);
+    console.log("============");
 
     return res.json(quizSet);
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
