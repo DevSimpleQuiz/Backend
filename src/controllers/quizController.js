@@ -28,6 +28,21 @@ const generateQuiz = async (req, res, next) => {
   }
 };
 
+const markQuizAnswer = async (req, res, next) => {
+  try {
+    const quizId = req.params.quizId; // 경로 파라미터에서 quizId 가져오기
+    const userAnswer = req.query?.answer; // 쿼리 파라미터에서 answer 가져오기
+
+    console.log("quizId : ", quizId);
+    console.log("userAnswer : ", userAnswer);
+
+    return res.json({ result: "OK" });
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+};
+
 const saveQuizResult = async (req, res, next) => {
   try {
     let { totalQuizCount, solvedQuizCount, totalQuizScore } = req.body;
@@ -74,5 +89,6 @@ const saveQuizResult = async (req, res, next) => {
 
 module.exports = {
   generateQuiz,
+  markQuizAnswer,
   saveQuizResult,
 };
