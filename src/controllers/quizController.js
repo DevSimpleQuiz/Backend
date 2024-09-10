@@ -28,6 +28,9 @@ const generateQuiz = async (req, res, next) => {
   }
 };
 
+/**
+ *
+ */
 const markQuizAnswer = async (req, res, next) => {
   try {
     const quizId = req.params.quizId; // 경로 파라미터에서 quizId 가져오기
@@ -35,6 +38,10 @@ const markQuizAnswer = async (req, res, next) => {
 
     console.log("quizId : ", quizId);
     console.log("userAnswer : ", userAnswer);
+
+    if (!userAnswer) {
+      res.json({ result });
+    }
 
     return res.json({ result: "OK" });
   } catch (err) {
