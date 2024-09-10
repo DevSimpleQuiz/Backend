@@ -1,9 +1,7 @@
 const ExcelJS = require("exceljs");
 const pool = require("../db/mysqldb");
 const { WORD_QUIZ_TYPE } = require("../constant/constant");
-const dotenv = require("dotenv");
 
-dotenv.config();
 // 메모리에 퀴즈 데이터를 저장할 변수
 let data = [];
 
@@ -77,29 +75,8 @@ const loadData = async (filePath) => {
   console.log("엑셀 데이터를 성공적으로 로드했습니다.");
 };
 
-/**
- {
-		  "quizId": 42, 
-	    "definition": "집안 살림에 쓰는 기구. 주로 장롱",
-	    "initialConstant": "ㄱㅅ",
-	    "wordLength": 2,
-	    "answerInfo": {
-		    correctAnswersCount: 42,
-		    totalAttemptsUntilFirstCorrectAnswer: 219
-	    }
-    }
- */
-// 랜덤으로 10개의 문제 생성 함수
-const generateQuizSet = async () => {
-  const quizGeneratorQuery = `SELECT id AS quizId, word, initial_constant AS initialConstant, definition, LENGTH(word) AS wordLength FROM quiz ORDER BY RAND() LIMIT 10;`;
-  const selectedData = await pool.query(quizGeneratorQuery);
-
-  return { quizzes: selectedData[0] };
-};
-
 const saveQuizDataToDatabase = async () => {
   // 데이터가 존재하는지 확인
-
   if (data.length === 0) {
     throw new Error(
       "데이터가 로드되지 않았습니다. loadData를 먼저 호출하세요."
@@ -121,10 +98,19 @@ const saveQuizDataToDatabase = async () => {
     for (let item of data) {
       const { word, definition, initialConstant } = item;
 
-      await connection.execute(
-        `INSERT INTO quiz (quiz_type, word, definition, initial_constant) VALUES (?, ?, ?, ?)`,
-        [WORD_QUIZ_TYPE, word, definition, initialConstant]
+      await connection.execute(quizQuery.insertQuiz, [
+        WORD_QUIZ_TYPE,
+        word,
+        definition,
+        initialConstant,
+      ]);
+      const quizIdQueryResult = await connection.execute(
+        quizQuery.getQuizIdByWord,
+        [word]
       );
+      const quizId = quizIdQueryResult[0][0]["id"];
+
+      await connection.execute(quizQuery.insertQuizStatistics, [quizId, 0, 0]);
     }
 
     await connection.commit();
@@ -138,4 +124,4 @@ const saveQuizDataToDatabase = async () => {
   }
 };
 
-module.exports = { loadData, generateQuizSet, saveQuizDataToDatabase };
+module.exports = { loadData, saveQuizDataToDatabase };

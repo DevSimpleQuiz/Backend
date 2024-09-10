@@ -5,6 +5,7 @@ const constants = {
   ENCODING_STYLE: "base64",
   COOKIE_OPTION: { httpOnly: true, secure: true, sameStie: "none" },
   WORD_QUIZ_TYPE: 1,
+  QUIZ_SET_SIZE: 10,
 };
 
 module.exports = constants;
