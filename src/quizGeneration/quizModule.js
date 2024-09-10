@@ -1,6 +1,11 @@
 const ExcelJS = require("exceljs");
 const pool = require("../db/mysqldb");
-const { WORD_QUIZ_TYPE } = require("../constant/constant");
+const {
+  WORD_QUIZ_TYPE,
+  DEFAULT_CORRECT_PEOPLE_COUNT,
+  DEFAULT_TOTAL_ATTEMPTS_COUNT_BEFORE_CORRECT,
+} = require("../constant/constant");
+const quizQuery = require("../queries/quizQuery.js");
 
 // 메모리에 퀴즈 데이터를 저장할 변수
 let data = [];
@@ -8,7 +13,6 @@ let data = [];
 // 한글 유니코드 범위 및 초성 계산을 위한 상수
 const HANGUL_SYLLABLE_BASE = 0xac00; // '가'의 유니코드 값
 const HANGUL_SYLLABLE_COUNT = 11172; // 한글 음절 개수
-const INITIAL_CONSONANT_COUNT = 19; // 초성 개수
 const MEDIAL_VOWEL_COUNT = 21; // 중성 개수
 const FINAL_CONSONANT_COUNT = 28; // 종성 개수
 
@@ -75,23 +79,8 @@ const loadData = async (filePath) => {
   console.log("엑셀 데이터를 성공적으로 로드했습니다.");
 };
 
-// 랜덤으로 10개의 문제 생성 함수
-const generateQuizSet = () => {
-  if (data.length === 0) {
-    throw new Error(
-      "데이터가 로드되지 않았습니다. loadData를 먼저 호출하세요."
-    );
-  }
-
-  const shuffledData = data.sort(() => 0.5 - Math.random());
-  const selectedData = shuffledData.slice(0, 10);
-
-  return { quizzes: selectedData };
-};
-
 const saveQuizDataToDatabase = async () => {
   // 데이터가 존재하는지 확인
-
   if (data.length === 0) {
     throw new Error(
       "데이터가 로드되지 않았습니다. loadData를 먼저 호출하세요."
@@ -101,17 +90,34 @@ const saveQuizDataToDatabase = async () => {
   const connection = await pool.getConnection(); // pool에서 연결 가져오기
 
   try {
+    const quiz_select_result = await connection.execute(
+      `SELECT COUNT(id) as COUNT 
+        FROM quiz`
+    );
+    const result_json = quiz_select_result[0][0];
+    if (result_json["COUNT"] > 0) return;
     // 트랜젝션 시작
     await connection.beginTransaction();
 
     for (let item of data) {
       const { word, definition, initialConstant } = item;
-      console.log(word, definition, initialConstant);
 
-      await connection.execute(
-        `INSERT INTO quiz (quiz_type, word, definition, initial_constant) VALUES (?, ?, ?, ?)`,
-        [WORD_QUIZ_TYPE, word, definition, initialConstant]
+      await connection.execute(quizQuery.insertQuiz, [
+        WORD_QUIZ_TYPE,
+        word,
+        definition,
+        initialConstant,
+      ]);
+      const quizIdQueryResult = await connection.execute(
+        quizQuery.getQuizIdByWord,
+        [word]
       );
+      const quizId = quizIdQueryResult[0][0]["id"];
+      await connection.execute(quizQuery.insertQuizStatistics, [
+        quizId,
+        DEFAULT_CORRECT_PEOPLE_COUNT,
+        DEFAULT_TOTAL_ATTEMPTS_COUNT_BEFORE_CORRECT,
+      ]);
     }
 
     await connection.commit();
@@ -125,4 +131,4 @@ const saveQuizDataToDatabase = async () => {
   }
 };
 
-module.exports = { loadData, generateQuizSet, saveQuizDataToDatabase };
+module.exports = { loadData, saveQuizDataToDatabase };

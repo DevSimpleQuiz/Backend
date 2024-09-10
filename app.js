@@ -24,8 +24,8 @@ const quizRouter = require("./src/routes/quiz");
 const rankRouter = require("./src/routes/rank");
 
 app.use("/users", userRouter);
-app.use("/quiz", quizRouter);
-app.use("/rank", rankRouter);
+app.use("/quizzes", quizRouter);
+app.use("/ranks", rankRouter);
 
 app.use(errorMiddleware);
 

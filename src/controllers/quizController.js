@@ -1,13 +1,14 @@
 const StatusCodes = require("http-status-codes");
 const {
   loadData,
-  generateQuizSet,
   saveQuizDataToDatabase,
 } = require("../quizGeneration/quizModule");
+const { generateQuizSet } = require("../services/quizService.js");
 const { verifyToken } = require("../services/jwtService.js");
 const pool = require("../db/mysqldb");
 const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
+
 // TODO: RDB 또는 REDIS로 전환
 (async () => {
   // 퀴즈용 엑셀 파일 로드, 최초 한번만 호출
@@ -15,13 +16,14 @@ const scoreQuery = require("../queries/scoreQuery.js");
   await saveQuizDataToDatabase();
 })();
 
-const generateQuiz = (req, res, next) => {
+const generateQuiz = async (req, res, next) => {
   try {
     // 퀴즈 세트 랜덤 생성
-    const quizSet = generateQuizSet();
+    const quizSet = await generateQuizSet();
 
     return res.json(quizSet);
   } catch (err) {
+    console.error(err);
     next(err);
   }
 };
