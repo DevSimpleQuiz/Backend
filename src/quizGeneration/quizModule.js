@@ -1,6 +1,10 @@
 const ExcelJS = require("exceljs");
 const pool = require("../db/mysqldb");
-const { WORD_QUIZ_TYPE } = require("../constant/constant");
+const {
+  WORD_QUIZ_TYPE,
+  DEFAULT_CORRECT_PEOPLE_COUNT,
+  DEFAULT_TOTAL_ATTEMPTS_COUNT_BEFORE_CORRECT,
+} = require("../constant/constant");
 
 // 메모리에 퀴즈 데이터를 저장할 변수
 let data = [];
@@ -8,7 +12,6 @@ let data = [];
 // 한글 유니코드 범위 및 초성 계산을 위한 상수
 const HANGUL_SYLLABLE_BASE = 0xac00; // '가'의 유니코드 값
 const HANGUL_SYLLABLE_COUNT = 11172; // 한글 음절 개수
-const INITIAL_CONSONANT_COUNT = 19; // 초성 개수
 const MEDIAL_VOWEL_COUNT = 21; // 중성 개수
 const FINAL_CONSONANT_COUNT = 28; // 종성 개수
 
@@ -109,8 +112,11 @@ const saveQuizDataToDatabase = async () => {
         [word]
       );
       const quizId = quizIdQueryResult[0][0]["id"];
-
-      await connection.execute(quizQuery.insertQuizStatistics, [quizId, 0, 0]);
+      await connection.execute(quizQuery.insertQuizStatistics, [
+        quizId,
+        DEFAULT_CORRECT_PEOPLE_COUNT,
+        DEFAULT_TOTAL_ATTEMPTS_COUNT_BEFORE_CORRECT,
+      ]);
     }
 
     await connection.commit();
