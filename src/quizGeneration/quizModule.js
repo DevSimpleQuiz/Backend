@@ -5,6 +5,7 @@ const {
   DEFAULT_CORRECT_PEOPLE_COUNT,
   DEFAULT_TOTAL_ATTEMPTS_COUNT_BEFORE_CORRECT,
 } = require("../constant/constant");
+const quizQuery = require("../queries/quizQuery.js");
 
 // 메모리에 퀴즈 데이터를 저장할 변수
 let data = [];

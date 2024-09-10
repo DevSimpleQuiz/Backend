@@ -1,4 +1,4 @@
-exports.insertQuiz = `INSERT INTO quiz (quiz_type, definition, initial_constant) VALUES (?, ?, ?, ?)`;
+exports.insertQuiz = `INSERT INTO quiz (quiz_type, word, definition, initial_constant) VALUES (?, ?, ?, ?)`;
 exports.getQuizIdByWord = `SELECT id FROM quiz WHERE word = ?`;
 exports.insertQuizStatistics = `INSERT INTO quiz_accuracy_statistics (quiz_id, correct_people_count, total_attempts_count_before_correct) VALUES (?, ?, ?)`;
 exports.generateQuizzes = `SELECT q.id AS quizId, q.word, q.initial_constant AS initialConstant, q.definition,
