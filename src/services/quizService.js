@@ -10,10 +10,10 @@ const generateQuizSet = async () => {
   const result = selectedData[0].map((quizData) => {
     return {
       quizId: quizData.quizId,
-      word: quizData.word,
-      initialConstant: quizData.initialConstant,
       definition: quizData.definition,
-      answerInfo: {
+      initialConstant: quizData.initialConstant,
+      wordLength: quizData.initialConstant.length,
+      quizAnswerStats: {
         correctAnswersCount: quizData.correctAnswersCount,
         totalAttemptsUntilFirstCorrectAnswer:
           quizData.totalAttemptsUntilFirstCorrectAnswer,
