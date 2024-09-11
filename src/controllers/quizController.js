@@ -29,7 +29,7 @@ const generateQuiz = async (req, res, next) => {
   }
 };
 
-// TODO: service에서 결과 값 유형이 두가지 이상인 경우의 처리하는 법 찾기(찾고자 하던 데이터를 찾았을 떄, 못찾았을 때)
+// TODO: service에서 결과 값 유형이 두 가지 이상인 경우의 처리하는 법 찾기(찾고자 하던 데이터를 찾았을 떄, 못찾았을 때)
 const markQuizAnswer = async (req, res, next) => {
   try {
     let userAnswer = req.query?.answer; // 쿼리 파라미터에서 answer 가져오기
@@ -49,6 +49,7 @@ const markQuizAnswer = async (req, res, next) => {
     const getWordQueryResult = await pool.query(quizQuery.getWordQuery, [
       quizId,
     ]);
+
     if (
       Array.isArray(getWordQueryResult[0]) &&
       getWordQueryResult[0].length === 0
@@ -57,6 +58,7 @@ const markQuizAnswer = async (req, res, next) => {
         message: "유효한 quiz id 이어야 합니다.",
       });
     }
+
     const word = getWordQueryResult[0][0]["word"];
     const isCorrectAnswer = word === userAnswer ? true : false;
 
