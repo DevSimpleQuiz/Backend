@@ -126,7 +126,7 @@ const validateLimitQueryParam = (limit) => {
 
 /** TODO
  * 1. page, limit 쿼리 파라미터 검증
- *   - 값이 있는가/
+ *   - 값이 있는가?
  *   - 숫자로만 이루어져 있는가?
  *   - 범위는 적절한가?
  *   - 미들웨어로 분리
@@ -134,6 +134,7 @@ const validateLimitQueryParam = (limit) => {
  * 3. api 구현
  * 4. 성능 이슈
  *   - 매 번 트랜젝션 발생
+ *     score에 값을 추가,갱신하거나 조회할 때
  *   - 돈과 관련된 것처럼 민감한 부분이 아니므로 유저마다 몇 초 정도 랭킹 순위가 다르게 보일 수 있다.
  * 5. Redis 도입 고려
  *   - score를 redis에 기록
@@ -142,61 +143,51 @@ const validateLimitQueryParam = (limit) => {
  */
 // ===
 /** TODO
- * 2. SQL query 테스트
  * 3. api 구현
+ *   - pagination
+ *   - pagination 정보(현재 페이지, 전체 페이지 수)
  */
 const rankingPagesInfo = async (req, res, next) => {
-  const queryParameter = req.query;
-  let { page, limit } = queryParameter;
+  const { page, limit } = req.query;
 
-  page = parseInt(page);
-  limit = parseInt(limit);
+  try {
+    const queryResult = await pool.query(scoreQuery.getRankingPagesInfo, [
+      limit,
+      (page - 1) * limit,
+    ]);
+    //
+    /** TODO
+     * - pagination info, 현재 페이지, 전체 페이지
+     * - 엣지 케이스 감안하기
+     *   - 뒤로가기, 앞으로 가기
+     *   - 범위 벗어나는 페이지
+     *   - 1 페이지에 1개 아이템 보여주는 경우
+     *   - rank가 1개도 없는 경우
+     *   - 페이지 범위를 벗어나는 경우
+     *     - 전체 7페이지인데 8페이지 이상을 요구하는 경우
+     *     - 마지막 페이지를 return
+     */
+    const currentPage = undefined;
+    const totalPage = undefined;
 
-  // TODO: validate middleware로 전환
-  if (validatePageQueryParam(page) && validateLimitQueryParam(limit)) {
-    try {
-      const queryResult = await pool.query(scoreQuery.getRankingPagesInfo, [
-        limit,
-        (page - 1) * limit,
-      ]);
-      //
-      /** TODO
-       * - pagination info, 현재 페이지, 전체 페이지
-       * - 엣지 케이스 감안하기
-       *   - 뒤로가기, 앞으로 가기
-       *   - 범위 벗어나는 페이지
-       *   - 1 페이지에 1개 아이템 보여주는 경우
-       *   - rank가 1개도 없는 경우
-       *   - 페이지 범위를 벗어나는 경우
-       *     - 전체 7페이지인데 8페이지 이상을 요구하는 경우
-       *     - 마지막 페이지를 return
-       */
-      const currentPage = undefined;
-      const totalPage = undefined;
-
-      return res.json({
-        allRankers: queryResult[0].map((userRankInfo) => {
-          return {
-            id: userRankInfo.id,
-            rank: userRankInfo.rank,
-            score: userRankInfo.score,
-            totalQuizCount: userRankInfo.totalQuizCount,
-            totalSolvedQuizCount: userRankInfo.totalSolvedQuizCount,
-          };
-        }),
-        pagination: {
-          currentPage,
-          totalPage,
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      next(err);
-    }
-  } else {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ message: "잘못된 요청입니다." });
+    return res.json({
+      allRankers: queryResult[0].map((userRankInfo) => {
+        return {
+          id: userRankInfo.id,
+          rank: userRankInfo.rank,
+          score: userRankInfo.score,
+          totalQuizCount: userRankInfo.totalQuizCount,
+          totalSolvedQuizCount: userRankInfo.totalSolvedQuizCount,
+        };
+      }),
+      pagination: {
+        currentPage,
+        totalPage,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    next(err);
   }
 };
 
