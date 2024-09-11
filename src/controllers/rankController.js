@@ -73,57 +73,6 @@ const nearRankersInfo = async (req, res, next) => {
   }
 };
 
-const isExist = (arg) => {
-  if (arg) {
-    return true;
-  }
-  return false;
-};
-
-const isNumber = (numberArg) => {
-  if (/^\d+$/.test(numberArg)) {
-    return true;
-  }
-  return false;
-};
-
-const isInRange = (numberArg, rangeBegin, rangeEnd) => {
-  const pargsedNumberArg = parseInt(numberArg);
-
-  if (pargsedNumberArg >= rangeBegin && pargsedNumberArg <= rangeEnd) {
-    return true;
-  }
-  return false;
-};
-
-const validatePageQueryParam = (page) => {
-  const INIT_PAGE_START_NUMBER = 1;
-  const MAX_PAGE = 2147483647;
-
-  if (
-    isExist(page) &&
-    isNumber(page) &&
-    isInRange(page, INIT_PAGE_START_NUMBER, MAX_PAGE)
-  ) {
-    return true;
-  }
-  return false;
-};
-
-const validateLimitQueryParam = (limit) => {
-  const INIT_LIMIT_START_NUMBER = 1;
-  const MAX_LIMIT = 100;
-
-  if (
-    isExist(limit) &&
-    isNumber(limit) &&
-    isInRange(limit, INIT_LIMIT_START_NUMBER, MAX_LIMIT)
-  ) {
-    return true;
-  }
-  return false;
-};
-
 /** TODO
  * 1. page, limit 쿼리 파라미터 검증
  *   - 값이 있는가?
