@@ -38,7 +38,7 @@ const join = async (req, res, next) => {
       const newUserIdResult = await connection.query(userQuery.getUserId, id);
       const newUserId = newUserIdResult[0][0]?.id;
       if (!newUserId) {
-        console.log("Fatal: 방금 추가한 유저의 아이디를 찾을 수 없습니다!!!");
+        console.error("Fatal: 방금 추가한 유저의 아이디를 찾을 수 없습니다!!!");
         throw createHttpError(
           StatusCodes.NOT_FOUND,
           "사용자 정보를 찾을 수 없습니다."

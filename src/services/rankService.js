@@ -10,7 +10,7 @@ const findMyRank = async (scoreInfos, userId) => {
   }
 
   for (let i = 0; i < scoreInfos.length; i++) {
-    if (scoreInfos[i].user_id === userId) {
+    if (scoreInfos[i]["user_id"] === userId) {
       return i + 1;
     }
   }
@@ -25,7 +25,6 @@ const findMyRank = async (scoreInfos, userId) => {
 const gerRankInfo = async (myUserId) => {
   try {
     const queryResult = await pool.query(scoreQuery.getAllrankInfo);
-
     const scoreInfos = queryResult[0];
     const myRank = await findMyRank(scoreInfos, myUserId);
 
@@ -39,6 +38,7 @@ const gerRankInfo = async (myUserId) => {
     }
 
     const idx = myRank - 1;
+
     return {
       myRank: myRank,
       solvedCount: scoreInfos[idx]["total_solved_count"],
@@ -56,13 +56,12 @@ const getMyRankInfo = async (scoreInfos, userId) => {
   const getUserIdResult = await pool.query(userQuery.getUserId, userId);
   const userNumId = getUserIdResult[0][0]?.id;
   const myRank = await findMyRank(scoreInfos, userNumId);
-
   const myScoreInfoIdx = myRank - 1;
 
   return {
     id: userId,
     rank: myRank,
-    totalQuizScore: scoreInfos[myScoreInfoIdx]["total_score"],
+    score: scoreInfos[myScoreInfoIdx]["total_score"],
     totalQuizCount: scoreInfos[myScoreInfoIdx]["total_quiz_count"],
     totalSolvedQuizCount: scoreInfos[myScoreInfoIdx]["total_solved_count"],
   };
@@ -70,8 +69,9 @@ const getMyRankInfo = async (scoreInfos, userId) => {
 
 const topThreeRankerInfo = async (scoreInfos) => {
   let topThreeUserNumIds = [];
+
   for (let idx = 0; idx < Math.min(scoreInfos.length, 3); idx++) {
-    topThreeUserNumIds.push(scoreInfos[idx].user_id);
+    topThreeUserNumIds.push(scoreInfos[idx]["user_id"]);
   }
 
   const { query, params } =
@@ -81,11 +81,12 @@ const topThreeRankerInfo = async (scoreInfos) => {
 
   let topUserRanks = [];
   for (let idx = 0; idx < Math.min(scoreInfos.length, 3); idx++) {
-    const userId = scoreInfos[idx].user_id;
+    const userId = scoreInfos[idx]["user_id"];
     const userInfo = userInfos.find((user) => user.id === userId);
+
     if (userInfo) {
       topUserRanks.push({
-        id: userInfo.user_id,
+        id: userInfo["user_id"],
         rank: idx + 1,
         score: scoreInfos[idx].total_score,
       });
@@ -108,31 +109,38 @@ const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
     result["nearRankersCount"] = topUserRanks.length;
   } else {
     let idx = myScoreInfoIdx - 1;
+
     // 현재 내 순위가 마지막이고 전체 유저 수가 3명 이상일 때
     if (myScoreInfoIdx + 1 === scoreInfos.length && scoreInfos.length > 2) {
       idx--;
     }
+
     for (idx; idx < Math.min(scoreInfos.length, myScoreInfoIdx + 2); idx++) {
-      nearThreeUserNumIds.push(scoreInfos[idx].user_id);
+      nearThreeUserNumIds.push(scoreInfos[idx]["user_id"]);
     }
+
     const { query, params } =
       userQuery.getThreeUsersInfoQuery(nearThreeUserNumIds);
     const userInfosQueryResult = await pool.query(query, params);
     const userInfos = userInfosQueryResult[0];
     let nearThreRanks = [];
     idx = myScoreInfoIdx - 1;
+
     // 현재 내 순위가 마지막이고 전체 유저 수가 3명 이상일 때
     if (myScoreInfoIdx + 1 === scoreInfos.length && scoreInfos.length > 2) {
       idx--;
     }
+
     for (idx; idx < Math.min(scoreInfos.length, myScoreInfoIdx + 2); idx++) {
-      const userId = scoreInfos[idx].user_id;
+      const userId = scoreInfos[idx]["user_id"];
       const userInfo = userInfos.find((user) => user.id === userId);
       if (userInfo) {
         nearThreRanks.push({
-          id: userInfo.user_id,
+          id: userInfo["user_id"],
           rank: idx + 1,
-          score: scoreInfos[idx].total_score,
+          score: scoreInfos[idx]["total_score"],
+          totalQuizCount: scoreInfos[idx]["total_quiz_count"],
+          totalSolvedQuizCount: scoreInfos[idx]["total_solved_count"],
         });
       }
     }

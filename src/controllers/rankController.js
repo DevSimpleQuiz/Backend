@@ -7,6 +7,7 @@ const {
 } = require("../services/rankService.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 const { StatusCodes } = require("http-status-codes");
+const createHttpError = require("http-errors");
 
 const topRankersInfo = async (req, res, next) => {
   try {
@@ -24,6 +25,7 @@ const topRankersInfo = async (req, res, next) => {
   }
 };
 
+// TODO: controller에서 바로 query 접근 못하도록 변경, 스코어 정보 가져오는 코드 별도 service로 추출
 const myRankInfo = async (req, res, next) => {
   try {
     const queryResult = await pool.query(scoreQuery.getAllrankInfo);
@@ -132,7 +134,6 @@ const validateLimitQueryParam = (limit) => {
  * 3. api 구현
  * 4. 성능 이슈
  *   - 매 번 트랜젝션 발생
- *   -
  *   - 돈과 관련된 것처럼 민감한 부분이 아니므로 유저마다 몇 초 정도 랭킹 순위가 다르게 보일 수 있다.
  * 5. Redis 도입 고려
  *   - score를 redis에 기록
@@ -144,15 +145,54 @@ const validateLimitQueryParam = (limit) => {
  * 2. SQL query 테스트
  * 3. api 구현
  */
-const rankingPagesInfo = (req, res, next) => {
+const rankingPagesInfo = async (req, res, next) => {
   const queryParameter = req.query;
-  const { page, limit } = queryParameter;
+  let { page, limit } = queryParameter;
+
+  page = parseInt(page);
+  limit = parseInt(limit);
 
   // TODO: validate middleware로 전환
   if (validatePageQueryParam(page) && validateLimitQueryParam(limit)) {
-    return res.json({
-      message: `endpoint: /ranks?$page={page}&limit=${limit}`,
-    });
+    try {
+      const queryResult = await pool.query(scoreQuery.getRankingPagesInfo, [
+        limit,
+        (page - 1) * limit,
+      ]);
+      //
+      /** TODO
+       * - pagination info, 현재 페이지, 전체 페이지
+       * - 엣지 케이스 감안하기
+       *   - 뒤로가기, 앞으로 가기
+       *   - 범위 벗어나는 페이지
+       *   - 1 페이지에 1개 아이템 보여주는 경우
+       *   - rank가 1개도 없는 경우
+       *   - 페이지 범위를 벗어나는 경우
+       *     - 전체 7페이지인데 8페이지 이상을 요구하는 경우
+       *     - 마지막 페이지를 return
+       */
+      const currentPage = undefined;
+      const totalPage = undefined;
+
+      return res.json({
+        allRankers: queryResult[0].map((userRankInfo) => {
+          return {
+            id: userRankInfo.id,
+            rank: userRankInfo.rank,
+            score: userRankInfo.score,
+            totalQuizCount: userRankInfo.totalQuizCount,
+            totalSolvedQuizCount: userRankInfo.totalSolvedQuizCount,
+          };
+        }),
+        pagination: {
+          currentPage,
+          totalPage,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      next(err);
+    }
   } else {
     return res
       .status(StatusCodes.BAD_REQUEST)
