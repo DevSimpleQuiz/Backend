@@ -5,21 +5,14 @@ const {
   topRankersInfo,
   myRankInfo,
   nearRankersInfo,
+  rankingPagesInfo,
 } = require("../controllers/rankController.js");
 
 router.get("/top", topRankersInfo);
 router.get("/my", isAuthenticated, myRankInfo);
 router.get("/nearby", isAuthenticated, nearRankersInfo);
 
-router.get("/", (req, res, next) => {
-  const queryParameter = req.query;
-  console.log("queryParameter : ", queryParameter);
-
-  const { page, limit } = queryParameter;
-  console.log("page : ", page);
-  console.log("limit : ", limit);
-
-  return res.json({ message: `endpoint: /ranks/${queryParameter}` });
-});
+// TODO: isAuthenticated
+router.get("/", rankingPagesInfo);
 
 module.exports = router;

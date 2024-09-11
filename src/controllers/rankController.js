@@ -70,8 +70,20 @@ const nearRankersInfo = async (req, res, next) => {
   }
 };
 
+const rankingPagesInfo = (req, res, next) => {
+  const queryParameter = req.query;
+  console.log("queryParameter : ", queryParameter);
+
+  const { page, limit } = queryParameter;
+  console.log("page : ", page);
+  console.log("limit : ", limit);
+
+  return res.json({ message: `endpoint: /ranks?$page={page}&limit=${limit}` });
+};
+
 module.exports = {
   topRankersInfo,
   myRankInfo,
   nearRankersInfo,
+  rankingPagesInfo,
 };
