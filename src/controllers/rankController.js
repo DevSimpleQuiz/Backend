@@ -6,9 +6,8 @@ const {
   nearThreeRankerInfo,
 } = require("../services/rankService.js");
 const scoreQuery = require("../queries/scoreQuery.js");
-const { StatusCodes } = require("http-status-codes");
-const createHttpError = require("http-errors");
 
+// TODO: pagination 코드를 service로 모듈화한 이후 top3에서 재활용할 것
 const topRankersInfo = async (req, res, next) => {
   try {
     const queryResult = await pool.query(scoreQuery.getAllrankInfo);
@@ -47,6 +46,7 @@ const myRankInfo = async (req, res, next) => {
   }
 };
 
+// TODO: pagination 코드를 service로 모듈화한 이후 near ranker에서 재활용할 것
 const nearRankersInfo = async (req, res, next) => {
   try {
     const queryResult = await pool.query(scoreQuery.getAllrankInfo);
