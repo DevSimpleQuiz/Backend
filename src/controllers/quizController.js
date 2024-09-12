@@ -46,7 +46,7 @@ const markQuizAnswer = async (req, res, next) => {
 
     quizId = parseInt(quizId);
 
-    const getWordQueryResult = await pool.query(quizQuery.getWordQuery, [
+    const getWordQueryResult = await pool.query(quizQuery.getQuizWord, [
       quizId,
     ]);
 
@@ -79,6 +79,7 @@ const saveQuizResult = async (req, res, next) => {
     const payload = await verifyToken(token);
     const userId = payload.id;
 
+    // TODO: getUserNumId service 만들어서 사용
     const getUserIdResult = await pool.query(userQuery.getUserId, userId);
     const userNumId = getUserIdResult[0][0]?.id;
 
@@ -89,7 +90,7 @@ const saveQuizResult = async (req, res, next) => {
       );
     }
 
-    // TODO: 1개씩만 저장할 것이기 때문에 total이라는 표현이 필요할까? 오히려 혼동을 주지는 않을까?
+    // TODO: service 모듈로 분리 [userNumId, totalQuizCount, solvedQuizCount, totalQuizScore, quizId];
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
@@ -102,10 +103,8 @@ const saveQuizResult = async (req, res, next) => {
         userNumId,
       ]);
 
-      // 이전에 맞힌 적이 있는가?
-      const checkSolvedQuizQuery = `SELECT id FROM solved_quizzes WHERE user_id = ? AND quiz_id = ?`;
       const solvedQuizQueryResult = await connection.query(
-        checkSolvedQuizQuery,
+        quizQuery.isQuizSolved,
         [userNumId, quizId]
       );
       const isSolved = solvedQuizQueryResult[0][0] ? true : false;
@@ -113,14 +112,9 @@ const saveQuizResult = async (req, res, next) => {
       // 이전에 맞힌 적이 없다면
       if (isSolved == false) {
         // 문제 풀었음을 표기 solved_quizzes
-        const quizSolvedQuery = `INSERT INTO solved_quizzes (quiz_id, user_id) VALUES (?, ?)`;
-        connection.query(quizSolvedQuery, [quizId, userNumId]);
+        connection.query(quizQuery.recordQuizSolved, [quizId, userNumId]);
         // 통계 데이터를 반영 quiz_accuracy_statistics;
-        const quizStatisticsQuery = `UPDATE quiz_accuracy_statistics \
-                                    SET correct_people_count = correct_people_count  + ?, \
-                                        total_attempts_count_before_correct = total_attempts_count_before_correct + ? \
-                                    WHERE quiz_id = ?`;
-        connection.query(quizStatisticsQuery, [
+        connection.query(quizQuery.updateQuizStatistics, [
           solvedQuizCount,
           totalQuizCount,
           quizId,
