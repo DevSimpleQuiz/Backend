@@ -55,9 +55,6 @@ CREATE TABLE quiz_accuracy_statistics (
     FOREIGN KEY (quiz_id) REFERENCES quiz (id)
 );
 
-
-
-
 /* infinite_quiz_summary
 infinite_quiz_summary
 - user_id (PK)

@@ -4,6 +4,7 @@ const {
   getMyRankInfo,
   topThreeRankerInfo,
   nearThreeRankerInfo,
+  getRankingPagesInfo,
 } = require("../services/rankService.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 
@@ -81,6 +82,9 @@ const nearRankersInfo = async (req, res, next) => {
  *   - 미들웨어로 분리
  * 2. SQL query 테스트
  * 3. api 구현
+ *   - pagination
+ *   - pagination 정보(현재 페이지, 전체 페이지 수)
+ *   - pagination 예외처리(페이지 없는 경우, 마지막 페이지인 경우)
  * 4. 성능 이슈
  *   - 매 번 트랜젝션 발생
  *     score에 값을 추가,갱신하거나 조회할 때
@@ -100,40 +104,9 @@ const rankingPagesInfo = async (req, res, next) => {
   const { page, limit } = req.query;
 
   try {
-    const queryResult = await pool.query(scoreQuery.getRankingPagesInfo, [
-      limit,
-      (page - 1) * limit,
-    ]);
-    //
-    /** TODO
-     * - pagination info, 현재 페이지, 전체 페이지
-     * - 엣지 케이스 감안하기
-     *   - 뒤로가기, 앞으로 가기
-     *   - 범위 벗어나는 페이지
-     *   - 1 페이지에 1개 아이템 보여주는 경우
-     *   - rank가 1개도 없는 경우
-     *   - 페이지 범위를 벗어나는 경우
-     *     - 전체 7페이지인데 8페이지 이상을 요구하는 경우
-     *     - 마지막 페이지를 return
-     */
-    const currentPage = undefined;
-    const totalPage = undefined;
+    const result = await getRankingPagesInfo(page, limit);
 
-    return res.json({
-      allRankers: queryResult[0].map((userRankInfo) => {
-        return {
-          id: userRankInfo.id,
-          rank: userRankInfo.rank,
-          score: userRankInfo.score,
-          totalQuizCount: userRankInfo.totalQuizCount,
-          totalSolvedQuizCount: userRankInfo.totalSolvedQuizCount,
-        };
-      }),
-      pagination: {
-        currentPage,
-        totalPage,
-      },
-    });
+    return res.json(result);
   } catch (err) {
     console.error(err);
     next(err);

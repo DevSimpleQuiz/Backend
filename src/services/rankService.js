@@ -150,10 +150,101 @@ const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
   }
 };
 
+const getRankingPagesInfo = async (page, limit) => {
+  if (page < 1 || limit < 1) {
+    console.log("getRankingPagesInfo()의 인자는 양의 정수이어야 합니다");
+    return null;
+  }
+
+  // TODO: transaction 처리, page 개수와 page 가져오는 연산
+  const totalItemCountQuery = `SELECT COUNT(id) AS totalItemCount FROM score`;
+  const totalItemCountQueryResult = await pool.query(totalItemCountQuery);
+  const totalItemCount = totalItemCountQueryResult[0][0]["totalItemCount"];
+  console.log("totalItemCount : ", totalItemCount);
+
+  const pageItemCount = limit;
+
+  // 페이지 당 1개, 전체 10개
+  // 페이지 당 3개, 전체 10개 => 14
+  // 나머지가 있으면 몫에서 +1
+  // 10개 3개
+  const totalPage =
+    totalItemCount % pageItemCount
+      ? parseInt(totalItemCount / pageItemCount, 10) + 1
+      : parseInt(totalItemCount / pageItemCount, 10);
+
+  const currentPage = undefined;
+
+  /** 고려사항
+   * 마지막 페이지보다 크면, 마지막 페이지를 보여줌
+   * 마지막 페이지 =>
+   * e.g) 전체 101개 아이템
+   *   한 페이지에 10개 아이템
+   *   11번째 페이지에 아이템 1개
+   *   즉, 101번째 아이템이어야 함
+   */
+  if (page > totalPage) {
+    Math.min(page);
+  }
+  const currentPageStartItemIdx = Math.max(
+    // parseInt(page / limit, 10) * limit,
+    (page - 1) * limit,
+    // parseInt(() / limit, 10),
+    // 페이지가 중간인 경우, 마지막인 경우, 전체 페이지 수보다 현재 페이지가 더 큰 경우
+    // 중간이면, 그대로 빼면 됨
+    // 마지막인 경우, 전체 아이템 수 % 페이지 당 아이템 수
+    // 전체 페이지 수보다 현재 페이지가 더 큰 경우,
+    Math.max(0, totalItemCount - pageItemCount)
+  );
+  const queryResult = await pool.query(scoreQuery.getRankingPagesInfo, [
+    limit,
+    currentPageStartItemIdx,
+  ]);
+  //
+  /** TODO
+   * - pagination info, 현재 페이지, 전체 페이지
+   * - 엣지 케이스 감안하기
+   *   - 뒤로가기, 앞으로 가기
+   *   - 범위 벗어나는 페이지
+   *   - 1 페이지에 1개 아이템 보여주는 경우
+   *   - rank가 1개도 없는 경우
+   *   - 페이지 범위를 벗어나는 경우
+   *     - 전체 7페이지인데 8페이지 이상을 요구하는 경우
+   *     - 마지막 페이지를 return
+   */
+  /** 페이지 표시 방법
+   * - 전체, 현재 페이지 계산
+   *   - 전체 아이템 수 가져오기query
+   *   - 페이지 계산
+   *     - 한 페이지 아이템 수로 나누어서 계산
+   *     - 전체 페이지 범위를 넘어선다면 마지막 페이지로 이동시킴
+   *       page = max(1, (itemCount - pageItemCount))
+   *   - 페이지 정보 query
+   *
+   */
+
+  return {
+    allRankers: queryResult[0].map((userRankInfo) => {
+      return {
+        id: userRankInfo.id,
+        rank: userRankInfo.rank,
+        score: userRankInfo.score,
+        totalQuizCount: userRankInfo.totalQuizCount,
+        totalSolvedQuizCount: userRankInfo.totalSolvedQuizCount,
+      };
+    }),
+    pagination: {
+      currentPage,
+      totalPage,
+    },
+  };
+};
+
 module.exports = {
   gerRankInfo,
   getMyRankInfo,
   topThreeRankerInfo,
   nearThreeRankerInfo,
+  getRankingPagesInfo,
   findMyRank,
 };
