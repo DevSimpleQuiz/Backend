@@ -303,6 +303,28 @@ const mypage = async (req, res, next) => {
   }
 };
 
+/** 회원탈퇴
+ * 유저 정보를 토큰에서 뽑아냄
+ *
+ * 뽑아낸 유저 정보를 가지고 아래 테이블들에서 삭제 진행
+ * - user
+ * - solved_quizzes
+ * TO BE
+ * - 무한 퀴즈 챌린지, 유저 데이터
+ *
+ * # 고려사항
+ * - 탈퇴한 유저의 기록은 지울 것인가?
+ */
+const removeUserAccount = (req, res, next) => {
+  // const user = undefined;
+  try {
+    res.clearCookie("token", COOKIE_OPTION);
+    return res.status(StatusCodes.NO_CONTENT).end();
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 module.exports = {
   join,
   checkLoginId,
@@ -312,4 +334,5 @@ module.exports = {
   isAvailablePassword,
   resetPassword,
   mypage,
+  removeUserAccount,
 };

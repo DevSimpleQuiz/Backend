@@ -19,9 +19,8 @@ const {
   isCurrentPassword,
   resetPassword,
   mypage,
+  removeUserAccount,
 } = require("../controllers/userController");
-const { StatusCodes } = require("http-status-codes");
-const { COOKIE_OPTION } = require("../constant/constant");
 
 router.post(
   "/join",
@@ -85,14 +84,6 @@ router.put(
   resetPassword
 );
 
-router.delete("/", isAuthenticated, (req, res, next) => {
-  // const user = undefined;
-  try {
-    res.clearCookie("token", COOKIE_OPTION);
-    return res.status(StatusCodes.NO_CONTENT).end();
-  } catch (err) {
-    console.error(err);
-  }
-});
+router.delete("/account", isAuthenticated, removeUserAccount);
 
 module.exports = router;
