@@ -74,7 +74,7 @@ const markQuizAnswer = async (req, res, next) => {
 
 const saveQuizResult = async (req, res, next) => {
   try {
-    let { totalQuizCount, solvedQuizCount, totalQuizScore } = req.body;
+    let { totalQuizCount, solvedQuizCount, totalQuizScore, quizId } = req.body;
     const token = req.cookies.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
@@ -89,25 +89,51 @@ const saveQuizResult = async (req, res, next) => {
       );
     }
 
-    const currentScoreInfoResult = await pool.query(
-      scoreQuery.getScoreInfo,
-      userNumId
-    );
+    // TODO: 1개씩만 저장할 것이기 때문에 total이라는 표현이 필요할까? 오히려 혼동을 주지는 않을까?
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
 
-    const currentScoreInfo = currentScoreInfoResult[0][0];
-
-    if (currentScoreInfo) {
-      totalQuizCount += currentScoreInfo["total_quiz_count"];
-      solvedQuizCount += currentScoreInfo["total_solved_count"];
-      totalQuizScore += currentScoreInfo["total_score"];
-
-      const values = [
+      // 퀴즈 결과 저장
+      await connection.query(scoreQuery.updateScoreInfo, [
         totalQuizCount,
         solvedQuizCount,
         totalQuizScore,
         userNumId,
-      ];
-      await pool.query(scoreQuery.updateScoreInfo, values);
+      ]);
+
+      // 이전에 맞힌 적이 있는가?
+      const checkSolvedQuizQuery = `SELECT id FROM solved_quizzes WHERE user_id = ? AND quiz_id = ?`;
+      const solvedQuizQueryResult = await connection.query(
+        checkSolvedQuizQuery,
+        [userNumId, quizId]
+      );
+      const isSolved = solvedQuizQueryResult[0][0] ? true : false;
+
+      // 이전에 맞힌 적이 없다면
+      if (isSolved == false) {
+        // 문제 풀었음을 표기 solved_quizzes
+        const quizSolvedQuery = `INSERT INTO solved_quizzes (quiz_id, user_id) VALUES (?, ?)`;
+        connection.query(quizSolvedQuery, [quizId, userNumId]);
+        // 통계 데이터를 반영 quiz_accuracy_statistics;
+        const quizStatisticsQuery = `UPDATE quiz_accuracy_statistics \
+                                    SET correct_people_count = correct_people_count  + ?, \
+                                        total_attempts_count_before_correct = total_attempts_count_before_correct + ? \
+                                    WHERE quiz_id = ?`;
+        connection.query(quizStatisticsQuery, [
+          solvedQuizCount,
+          totalQuizCount,
+          quizId,
+        ]);
+      }
+
+      connection.commit();
+    } catch (error) {
+      console.error("퀴즈 결과 저장 트렌젝션 쿼리 에러 ,", err);
+      await connection.rollback();
+      next(err);
+    } finally {
+      connection.release();
     }
 
     return res.status(StatusCodes.NO_CONTENT).end();

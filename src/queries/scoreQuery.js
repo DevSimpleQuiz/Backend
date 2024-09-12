@@ -1,5 +1,9 @@
 exports.getScoreInfo = `SELECT total_quiz_count, total_solved_count, total_score FROM score WHERE user_id = ?`;
-exports.updateScoreInfo = `UPDATE score SET total_quiz_count = ?, total_solved_count = ?, total_score = ? WHERE user_id = ?`;
+exports.updateScoreInfo = `UPDATE score \
+                            SET total_quiz_count = total_quiz_count + ?, \
+                                total_solved_count = total_solved_count + ?, \
+                                total_score = total_score + ? 
+                            WHERE user_id = ?`;
 exports.addScoreInfo = `INSERT INTO score (user_id) VALUES (?)`;
 exports.getAllrankInfo = `SELECT user_id, total_quiz_count, total_solved_count, total_score FROM score ORDER BY totaL_score DESC, user_id ASC`;
 exports.getRankingPageItemsCount = `SELECT COUNT(id) AS totalItemCount FROM score`;
@@ -14,3 +18,7 @@ exports.getRankingPagesInfo = `SELECT u.user_id AS id, \
                                     ON u.id = s.user_id
                                 LIMIT ? \
                                 OFFSET ?`;
+// UPDATE your_table_name
+// SET correct_people_count = correct_people_count + 0,
+//     total_attempts_count_before_correct = total_attempts_count_before_correct + 1
+// WHERE quiz_id = 1;
