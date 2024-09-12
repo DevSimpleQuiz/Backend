@@ -94,12 +94,6 @@ const nearRankersInfo = async (req, res, next) => {
  *   - 값이 자주 변동될 수 있는데 redis 쓰는 게 나은가?
  *   - 추후 message queue 도입 시 달라질 수 있는 점은 무엇인가?
  */
-// ===
-/** TODO
- * 3. api 구현
- *   - pagination
- *   - pagination 정보(현재 페이지, 전체 페이지 수)
- */
 const rankingPagesInfo = async (req, res, next) => {
   const { page, limit } = req.query;
 
