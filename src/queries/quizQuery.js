@@ -7,4 +7,10 @@ exports.generateQuizzes = `SELECT q.id AS quizId, q.word, q.initial_constant AS 
                             JOIN quiz_accuracy_statistics s ON q.id = s.quiz_id
                             ORDER BY RAND()
                             LIMIT ?`;
-exports.getWordQuery = `SELECT word FROM quiz WHERE id = ?`;
+exports.getQuizWord = `SELECT word FROM quiz WHERE id = ?`;
+exports.isQuizSolved = `SELECT id FROM solved_quizzes WHERE user_id = ? AND quiz_id = ?`;
+exports.recordQuizSolved = `INSERT INTO solved_quizzes (quiz_id, user_id) VALUES (?, ?)`;
+exports.updateQuizStatistics = `UPDATE quiz_accuracy_statistics \
+                                    SET correct_people_count = correct_people_count  + ?, \
+                                        total_attempts_count_before_correct = total_attempts_count_before_correct + ? \
+                                    WHERE quiz_id = ?`;

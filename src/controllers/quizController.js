@@ -46,7 +46,7 @@ const markQuizAnswer = async (req, res, next) => {
 
     quizId = parseInt(quizId);
 
-    const getWordQueryResult = await pool.query(quizQuery.getWordQuery, [
+    const getWordQueryResult = await pool.query(quizQuery.getQuizWord, [
       quizId,
     ]);
 
@@ -74,11 +74,12 @@ const markQuizAnswer = async (req, res, next) => {
 
 const saveQuizResult = async (req, res, next) => {
   try {
-    let { totalQuizCount, solvedQuizCount, totalQuizScore } = req.body;
+    let { totalQuizCount, solvedQuizCount, totalQuizScore, quizId } = req.body;
     const token = req.cookies.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
 
+    // TODO: getUserNumId service 만들어서 사용
     const getUserIdResult = await pool.query(userQuery.getUserId, userId);
     const userNumId = getUserIdResult[0][0]?.id;
 
@@ -89,25 +90,44 @@ const saveQuizResult = async (req, res, next) => {
       );
     }
 
-    const currentScoreInfoResult = await pool.query(
-      scoreQuery.getScoreInfo,
-      userNumId
-    );
+    // TODO: service 모듈로 분리 [userNumId, totalQuizCount, solvedQuizCount, totalQuizScore, quizId];
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
 
-    const currentScoreInfo = currentScoreInfoResult[0][0];
-
-    if (currentScoreInfo) {
-      totalQuizCount += currentScoreInfo["total_quiz_count"];
-      solvedQuizCount += currentScoreInfo["total_solved_count"];
-      totalQuizScore += currentScoreInfo["total_score"];
-
-      const values = [
+      // 퀴즈 결과 저장
+      await connection.query(scoreQuery.updateScoreInfo, [
         totalQuizCount,
         solvedQuizCount,
         totalQuizScore,
         userNumId,
-      ];
-      await pool.query(scoreQuery.updateScoreInfo, values);
+      ]);
+
+      const solvedQuizQueryResult = await connection.query(
+        quizQuery.isQuizSolved,
+        [userNumId, quizId]
+      );
+      const isSolved = solvedQuizQueryResult[0][0] ? true : false;
+
+      // 이전에 맞힌 적이 없다면
+      if (isSolved == false) {
+        // 문제 풀었음을 표기 solved_quizzes
+        connection.query(quizQuery.recordQuizSolved, [quizId, userNumId]);
+        // 통계 데이터를 반영 quiz_accuracy_statistics;
+        connection.query(quizQuery.updateQuizStatistics, [
+          solvedQuizCount,
+          totalQuizCount,
+          quizId,
+        ]);
+      }
+
+      connection.commit();
+    } catch (error) {
+      console.error("퀴즈 결과 저장 트렌젝션 쿼리 에러 ,", err);
+      await connection.rollback();
+      next(err);
+    } finally {
+      connection.release();
     }
 
     return res.status(StatusCodes.NO_CONTENT).end();
