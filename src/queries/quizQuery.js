@@ -7,5 +7,4 @@ exports.generateQuizzes = `SELECT q.id AS quizId, q.word, q.initial_constant AS 
                             JOIN quiz_accuracy_statistics s ON q.id = s.quiz_id
                             ORDER BY RAND()
                             LIMIT ?`;
-
 exports.getWordQuery = `SELECT word FROM quiz WHERE id = ?`;

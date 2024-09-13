@@ -4,9 +4,11 @@ const {
   getMyRankInfo,
   topThreeRankerInfo,
   nearThreeRankerInfo,
+  getRankingPagesInfo,
 } = require("../services/rankService.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 
+// TODO: pagination 코드를 service로 모듈화한 이후 top3에서 재활용할 것
 const topRankersInfo = async (req, res, next) => {
   try {
     const queryResult = await pool.query(scoreQuery.getAllrankInfo);
@@ -23,6 +25,7 @@ const topRankersInfo = async (req, res, next) => {
   }
 };
 
+// TODO: controller에서 바로 query 접근 못하도록 변경, 스코어 정보 가져오는 코드 별도 service로 추출
 const myRankInfo = async (req, res, next) => {
   try {
     const queryResult = await pool.query(scoreQuery.getAllrankInfo);
@@ -44,6 +47,7 @@ const myRankInfo = async (req, res, next) => {
   }
 };
 
+// TODO: pagination 코드를 service로 모듈화한 이후 near ranker에서 재활용할 것
 const nearRankersInfo = async (req, res, next) => {
   try {
     const queryResult = await pool.query(scoreQuery.getAllrankInfo);
@@ -70,8 +74,42 @@ const nearRankersInfo = async (req, res, next) => {
   }
 };
 
+/** TODO
+ * 1. page, limit 쿼리 파라미터 검증
+ *   - 값이 있는가?
+ *   - 숫자로만 이루어져 있는가?
+ *   - 범위는 적절한가?
+ *   - 미들웨어로 분리
+ * 2. SQL query 테스트
+ * 3. api 구현
+ *   - pagination
+ *   - pagination 정보(현재 페이지, 전체 페이지 수)
+ *   - pagination 예외처리(페이지 없는 경우, 마지막 페이지인 경우)
+ * 4. 성능 이슈
+ *   - 매 번 트랜젝션 발생
+ *     score에 값을 추가,갱신하거나 조회할 때
+ *   - 돈과 관련된 것처럼 민감한 부분이 아니므로 유저마다 몇 초 정도 랭킹 순위가 다르게 보일 수 있다.
+ * 5. Redis 도입 고려
+ *   - score를 redis에 기록
+ *   - 값이 자주 변동될 수 있는데 redis 쓰는 게 나은가?
+ *   - 추후 message queue 도입 시 달라질 수 있는 점은 무엇인가?
+ */
+const rankingPagesInfo = async (req, res, next) => {
+  const { page, limit } = req.query;
+
+  try {
+    const result = await getRankingPagesInfo(page, limit);
+
+    return res.json(result);
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+};
+
 module.exports = {
   topRankersInfo,
   myRankInfo,
   nearRankersInfo,
+  rankingPagesInfo,
 };
