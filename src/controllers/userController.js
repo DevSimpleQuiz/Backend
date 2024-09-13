@@ -10,6 +10,7 @@ const { gerRankInfo } = require("../services/rankService.js");
 const {
   convertHashPassword,
   generateSalt,
+  getUserNumIdByToken,
 } = require("../services/userService.js");
 const { verifyToken } = require("../services/jwtService.js");
 
@@ -264,13 +265,19 @@ const resetPassword = async (req, res, next) => {
     "solvedCount": 30// 지금까지 푼 문제 수
   }
  */
+// src/controllers/userController.js
 const mypage = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
-    const getUserIdResult = await pool.query(userQuery.getUserId, userId);
-    const userNumId = getUserIdResult[0][0]?.id;
+    const userIdResult = await pool.query(userQuery.getUserId, userId);
+    console.log("userIdResult : ", userIdResult);
+    console.log("userIdResult[0] : ", userIdResult[0]);
+    console.log("userIdResult[0][0] : ", userIdResult[0][0]);
+    const userNumId = userIdResult[0][0]?.id;
+
+    console.log("userNumId : ", userNumId);
 
     if (!userNumId) {
       throw createHttpError(
@@ -309,19 +316,25 @@ const mypage = async (req, res, next) => {
  * 뽑아낸 유저 정보를 가지고 아래 테이블들에서 삭제 진행
  * - user
  * - solved_quizzes
+ * - score
  * TO BE
  * - 무한 퀴즈 챌린지, 유저 데이터
  *
  * # 고려사항
  * - 탈퇴한 유저의 기록은 지울 것인가?
  */
-const removeUserAccount = (req, res, next) => {
-  // const user = undefined;
+// src/controllers/userController.js
+const removeUserAccount = async (req, res, next) => {
   try {
-    res.clearCookie("token", COOKIE_OPTION);
+    const token = req.cookies?.token;
+    const userNumId = await getUserNumIdByToken(token);
+    console.log("## userNumId : ", userNumId);
+
+    // res.clearCookie("token", COOKIE_OPTION);
     return res.status(StatusCodes.NO_CONTENT).end();
   } catch (err) {
-    console.error(err);
+    console.error("removeUserAccount : ", err);
+    next(err);
   }
 };
 

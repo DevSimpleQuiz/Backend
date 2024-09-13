@@ -79,7 +79,7 @@ const saveQuizResult = async (req, res, next) => {
     const payload = await verifyToken(token);
     const userId = payload.id;
 
-    // TODO: getUserNumId service 만들어서 사용
+    // TODO: getUserNumIdByToken service 만들어서 사용
     const getUserIdResult = await pool.query(userQuery.getUserId, userId);
     const userNumId = getUserIdResult[0][0]?.id;
 
