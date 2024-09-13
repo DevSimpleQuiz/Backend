@@ -112,7 +112,11 @@ const saveQuizResult = async (req, res, next) => {
       // 이전에 맞힌 적이 없다면
       if (isSolved == false) {
         // 문제 풀었음을 표기 solved_quizzes
-        await connection.query(quizQuery.recordQuizSolved, [quizId, userNumId]);
+        if (solvedQuizCount === 1)
+          await connection.query(quizQuery.recordQuizSolved, [
+            quizId,
+            userNumId,
+          ]);
         // 통계 데이터를 반영 quiz_accuracy_statistics;
         await connection.query(quizQuery.updateQuizStatistics, [
           solvedQuizCount,
