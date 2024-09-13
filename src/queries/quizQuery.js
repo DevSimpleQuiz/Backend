@@ -14,3 +14,4 @@ exports.updateQuizStatistics = `UPDATE quiz_accuracy_statistics \
                                     SET correct_people_count = correct_people_count  + ?, \
                                         total_attempts_count_before_correct = total_attempts_count_before_correct + ? \
                                     WHERE quiz_id = ?`;
+exports.removeUserSolvedQuizHistory = `DELETE FROM solved_quizzes WHERE user_id = ?`;

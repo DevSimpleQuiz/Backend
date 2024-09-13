@@ -4,6 +4,7 @@ const createHttpError = require("http-errors");
 const pool = require("../db/mysqldb");
 const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
+const quizQuery = require("../queries/quizQuery.js");
 const { COOKIE_OPTION } = require("../constant/constant.js");
 const { gerRankInfo } = require("../services/rankService.js");
 
@@ -328,9 +329,60 @@ const removeUserAccount = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
     const userNumId = await getUserNumIdByToken(token);
-    console.log("## userNumId : ", userNumId);
+    const findUserInfoQuery = `SELECT * FROM user WHERE id = ?`;
+    const findUserInfoQueryResult = await pool.query(
+      findUserInfoQuery,
+      userNumId
+    );
 
-    // res.clearCookie("token", COOKIE_OPTION);
+    console.log(
+      "findUserInfoQueryResult[0][0] : ",
+      findUserInfoQueryResult[0][0]
+    );
+
+    const findUserScoreInfoQuery = `SELECT * FROM score WHERE user_id = ?`;
+    const findUserScoreInfoQueryResult = await pool.query(
+      findUserScoreInfoQuery,
+      userNumId
+    );
+
+    console.log(
+      "findUserScoreInfoQueryResult[0][0] : ",
+      findUserScoreInfoQueryResult[0][0]
+    );
+
+    const findSolvedQuizHistoryQuery = `SELECT * FROM solved_quizzes WHERE user_id = ?`;
+    const findSolvedQuizHistoryQueryResult = await pool.query(
+      findSolvedQuizHistoryQuery,
+      userNumId
+    );
+
+    console.log(
+      "findSolvedQuizHistoryQueryResult[0][0] : ",
+      findSolvedQuizHistoryQueryResult[0][0]
+    );
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // user, score, solved_quizzes 테이블 속 계정 삭제
+      await connection.query(scoreQuery.removeUserScoreHistory, userNumId);
+      await connection.query(quizQuery.removeUserSolvedQuizHistory, userNumId);
+      // user id를 FK로 가진 테이블의 데이터들부터 삭제한 뒤에 user 테이블에서 유저 정보 삭제
+      await connection.query(userQuery.removeUserAccount, userNumId);
+
+      await connection.commit();
+    } catch (err) {
+      console.error("회원 탈퇴 트렌젝션 쿼리 에러 ,", err);
+      await connection.rollback();
+      next(err);
+    } finally {
+      connection.release();
+    }
+
+    res.clearCookie("token", COOKIE_OPTION);
+
     return res.status(StatusCodes.NO_CONTENT).end();
   } catch (err) {
     console.error("removeUserAccount : ", err);
