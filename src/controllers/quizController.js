@@ -121,7 +121,7 @@ const saveQuizResult = async (req, res, next) => {
         ]);
       }
 
-      connection.commit();
+      await connection.commit();
     } catch (error) {
       console.error("퀴즈 결과 저장 트렌젝션 쿼리 에러 ,", err);
       await connection.rollback();
@@ -132,7 +132,7 @@ const saveQuizResult = async (req, res, next) => {
 
     return res.status(StatusCodes.NO_CONTENT).end();
   } catch (err) {
-    console.error("퀴즈 결과 저장 쿼리 에러 ,", err);
+    console.error("퀴즈 결과 저장 트렌젝션 쿼리 에러 ,", err);
     next(err);
   }
 };
