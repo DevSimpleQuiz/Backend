@@ -98,6 +98,7 @@ const topThreeRankerInfo = async (scoreInfos) => {
   };
 };
 
+// TODO: SQL로 순위도 가져오도록 수정
 const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
   // myScoreInfoIdx 인근 +- 1
   // 내가 1등인 경우 1,2,3등
@@ -105,8 +106,11 @@ const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
   let nearThreeUserNumIds = [];
   // 내가 1등인 경우
   if (myScoreInfoIdx === 0) {
-    result["nearRankers"] = topUserRanks;
-    result["nearRankersCount"] = topUserRanks.length;
+    const topRankers = await topThreeRankerInfo(scoreInfos);
+
+    return {
+      nearRankers: topRankers["topRankers"],
+    };
   } else {
     let idx = myScoreInfoIdx - 1;
 
@@ -123,7 +127,7 @@ const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
       userQuery.getThreeUsersInfoQuery(nearThreeUserNumIds);
     const userInfosQueryResult = await pool.query(query, params);
     const userInfos = userInfosQueryResult[0];
-    let nearThreRanks = [];
+    let nearThreeRanks = [];
     idx = myScoreInfoIdx - 1;
 
     // 현재 내 순위가 마지막이고 전체 유저 수가 3명 이상일 때
@@ -135,7 +139,7 @@ const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
       const userId = scoreInfos[idx]["user_id"];
       const userInfo = userInfos.find((user) => user.id === userId);
       if (userInfo) {
-        nearThreRanks.push({
+        nearThreeRanks.push({
           id: userInfo["user_id"],
           rank: idx + 1,
           score: scoreInfos[idx]["total_score"],
@@ -145,7 +149,7 @@ const nearThreeRankerInfo = async (scoreInfos, myScoreInfoIdx) => {
       }
     }
     return {
-      nearRankers: nearThreRanks,
+      nearRankers: nearThreeRanks,
     };
   }
 };

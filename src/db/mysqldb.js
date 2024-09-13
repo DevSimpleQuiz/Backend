@@ -1,7 +1,8 @@
 // mysql 모듈 소환
-const mysqldb = require("mysql2/promise");
+// import { createPool } from "mysql2/promise";
+const { createPool } = require("mysql2/promise");
 
-const pool = mysqldb.createPool({
+const pool = createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,

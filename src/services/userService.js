@@ -8,7 +8,7 @@ const {
   ENCODING_STYLE,
 } = require("../constant/constant.js");
 const { verifyToken } = require("./jwtService.js");
-const { pool } = require("../db/mysqldb.js");
+const pool = require("../db/mysqldb.js");
 const userQuery = require("../queries/userQuery.js");
 const createHttpError = require("http-errors");
 const { StatusCodes } = require("http-status-codes");
@@ -35,9 +35,7 @@ const getUserNumIdByToken = async (token) => {
   try {
     const payload = await verifyToken(token);
     const userId = payload.id;
-    const userIdResult = await pool
-      .promise()
-      .query(userQuery.getUserId, userId);
+    const userIdResult = await pool.query(userQuery.getUserId, userId);
     const userNumId = userIdResult[0][0]?.id;
 
     if (!userNumId) {
