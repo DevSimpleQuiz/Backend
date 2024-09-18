@@ -136,8 +136,18 @@ const saveQuizResult = async (req, res, next) => {
   }
 };
 
+const infiniteChallenge = (req, res, next) => {
+  try {
+    return res.json({ message: "Ok" });
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+};
+
 module.exports = {
   generateQuiz,
   markQuizAnswer,
   saveQuizResult,
+  infiniteChallenge,
 };
