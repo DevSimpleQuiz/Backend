@@ -166,9 +166,13 @@ const saveQuizResult = async (req, res, next) => {
  *     challengeId의 유효시간을 두지 말고, 틀리면 삭제시키는 식으로 처리할 수 있다.
  *     redis 보관에 비용이 들 수 있으므로 삭제?
  */
+const { v4: uuidv4 } = require("uuid");
+
 const infiniteChallenge = (req, res, next) => {
   try {
-    return res.json({ message: "Ok" });
+    const newChallengeId = uuidv4();
+
+    return res.json({ message: "Ok", challengeId: newChallengeId });
   } catch (err) {
     console.error(err);
     next(err);
