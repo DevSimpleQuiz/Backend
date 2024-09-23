@@ -79,7 +79,7 @@ const saveQuizResult = async (req, res, next) => {
     const payload = await verifyToken(token);
     const userId = payload.id;
 
-    // TODO: getUserNumId service 만들어서 사용
+    // TODO: getUserNumIdByToken service 만들어서 사용
     const getUserIdResult = await pool.query(userQuery.getUserId, userId);
     const userNumId = getUserIdResult[0][0]?.id;
 
@@ -112,16 +112,20 @@ const saveQuizResult = async (req, res, next) => {
       // 이전에 맞힌 적이 없다면
       if (isSolved == false) {
         // 문제 풀었음을 표기 solved_quizzes
-        connection.query(quizQuery.recordQuizSolved, [quizId, userNumId]);
+        if (solvedQuizCount === 1)
+          await connection.query(quizQuery.recordQuizSolved, [
+            quizId,
+            userNumId,
+          ]);
         // 통계 데이터를 반영 quiz_accuracy_statistics;
-        connection.query(quizQuery.updateQuizStatistics, [
+        await connection.query(quizQuery.updateQuizStatistics, [
           solvedQuizCount,
           totalQuizCount,
           quizId,
         ]);
       }
 
-      connection.commit();
+      await connection.commit();
     } catch (error) {
       console.error("퀴즈 결과 저장 트렌젝션 쿼리 에러 ,", err);
       await connection.rollback();
@@ -132,6 +136,7 @@ const saveQuizResult = async (req, res, next) => {
 
     return res.status(StatusCodes.NO_CONTENT).end();
   } catch (err) {
+    console.error("퀴즈 결과 저장 트렌젝션 쿼리 에러 ,", err);
     next(err);
   }
 };

@@ -4,6 +4,7 @@ exports.getUserInfo = `SELECT user_id, password, salt FROM user WHERE user_id = 
 exports.getUserPasswordInfo = `SELECT password, salt FROM user WHERE user_id = ?`;
 exports.resetPassword = `UPDATE user SET password = ?, salt = ? WHERE user_id = ?`;
 exports.getThreeUsersInfo = `SELECT user_id, id FROM user WHERE id IN (?, ?, ?)`;
+exports.removeUserAccount = `DELETE FROM user WHERE id = ?`;
 
 // Function to dynamically generate query for up to 3 user IDs
 exports.getThreeUsersInfoQuery = (ids) => {
