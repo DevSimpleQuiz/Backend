@@ -19,6 +19,7 @@ const {
   isCurrentPassword,
   resetPassword,
   mypage,
+  removeUserAccount,
 } = require("../controllers/userController");
 
 router.post(
@@ -82,5 +83,7 @@ router.put(
   validationMiddleware,
   resetPassword
 );
+
+router.delete("/account", isAuthenticated, removeUserAccount);
 
 module.exports = router;

@@ -56,6 +56,15 @@ const quizValidators = {
       .withMessage("맞춘 총 점수는 문자열이 아닌 정수여야 합니다.")
       .isInt({ min: 0 })
       .withMessage("맞춘 총 점수는 0 이상의 정수여야 합니다."),
+    body("quizId")
+      .exists()
+      .withMessage("퀴즈ID가 존재해야 합니다.")
+      .notEmpty()
+      .withMessage("퀴즈ID는 비어 있을 수 없습니다.")
+      .custom(ensureInt)
+      .withMessage("퀴즈ID는 문자열이 아닌 정수여야 합니다.")
+      .isInt({ min: 0 })
+      .withMessage("퀴즈ID는 0 이상의 정수여야 합니다."),
   ],
 };
 

@@ -18,7 +18,4 @@ exports.getRankingPagesInfo = `SELECT u.user_id AS id, \
                                     ON u.id = s.user_id
                                 LIMIT ? \
                                 OFFSET ?`;
-// UPDATE your_table_name
-// SET correct_people_count = correct_people_count + 0,
-//     total_attempts_count_before_correct = total_attempts_count_before_correct + 1
-// WHERE quiz_id = 1;
+exports.removeUserScoreHistory = `DELETE FROM score WHERE user_id = ?`;

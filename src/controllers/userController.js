@@ -4,12 +4,14 @@ const createHttpError = require("http-errors");
 const pool = require("../db/mysqldb");
 const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
+const quizQuery = require("../queries/quizQuery.js");
 const { COOKIE_OPTION } = require("../constant/constant.js");
 const { gerRankInfo } = require("../services/rankService.js");
 
 const {
   convertHashPassword,
   generateSalt,
+  getUserNumIdByToken,
 } = require("../services/userService.js");
 const { verifyToken } = require("../services/jwtService.js");
 
@@ -264,13 +266,19 @@ const resetPassword = async (req, res, next) => {
     "solvedCount": 30// 지금까지 푼 문제 수
   }
  */
+// src/controllers/userController.js
 const mypage = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
-    const getUserIdResult = await pool.query(userQuery.getUserId, userId);
-    const userNumId = getUserIdResult[0][0]?.id;
+    const userIdResult = await pool.query(userQuery.getUserId, userId);
+    console.log("userIdResult : ", userIdResult);
+    console.log("userIdResult[0] : ", userIdResult[0]);
+    console.log("userIdResult[0][0] : ", userIdResult[0][0]);
+    const userNumId = userIdResult[0][0]?.id;
+
+    console.log("userNumId : ", userNumId);
 
     if (!userNumId) {
       throw createHttpError(
@@ -303,6 +311,85 @@ const mypage = async (req, res, next) => {
   }
 };
 
+/** 회원탈퇴
+ * 유저 정보를 토큰에서 뽑아냄
+ *
+ * 뽑아낸 유저 정보를 가지고 아래 테이블들에서 삭제 진행
+ * - user
+ * - solved_quizzes
+ * - score
+ * TO BE
+ * - 무한 퀴즈 챌린지, 유저 데이터
+ *
+ * # 고려사항
+ * - 탈퇴한 유저의 기록은 지울 것인가?
+ */
+// src/controllers/userController.js
+const removeUserAccount = async (req, res, next) => {
+  try {
+    const token = req.cookies?.token;
+    const userNumId = await getUserNumIdByToken(token);
+    const findUserInfoQuery = `SELECT * FROM user WHERE id = ?`;
+    const findUserInfoQueryResult = await pool.query(
+      findUserInfoQuery,
+      userNumId
+    );
+
+    console.log(
+      "findUserInfoQueryResult[0][0] : ",
+      findUserInfoQueryResult[0][0]
+    );
+
+    const findUserScoreInfoQuery = `SELECT * FROM score WHERE user_id = ?`;
+    const findUserScoreInfoQueryResult = await pool.query(
+      findUserScoreInfoQuery,
+      userNumId
+    );
+
+    console.log(
+      "findUserScoreInfoQueryResult[0][0] : ",
+      findUserScoreInfoQueryResult[0][0]
+    );
+
+    const findSolvedQuizHistoryQuery = `SELECT * FROM solved_quizzes WHERE user_id = ?`;
+    const findSolvedQuizHistoryQueryResult = await pool.query(
+      findSolvedQuizHistoryQuery,
+      userNumId
+    );
+
+    console.log(
+      "findSolvedQuizHistoryQueryResult[0][0] : ",
+      findSolvedQuizHistoryQueryResult[0][0]
+    );
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // user, score, solved_quizzes 테이블 속 계정 삭제
+      await connection.query(scoreQuery.removeUserScoreHistory, userNumId);
+      await connection.query(quizQuery.removeUserSolvedQuizHistory, userNumId);
+      // user id를 FK로 가진 테이블의 데이터들부터 삭제한 뒤에 user 테이블에서 유저 정보 삭제
+      await connection.query(userQuery.removeUserAccount, userNumId);
+
+      await connection.commit();
+    } catch (err) {
+      console.error("회원 탈퇴 트렌젝션 쿼리 에러 ,", err);
+      await connection.rollback();
+      next(err);
+    } finally {
+      connection.release();
+    }
+
+    res.clearCookie("token", COOKIE_OPTION);
+
+    return res.status(StatusCodes.NO_CONTENT).end();
+  } catch (err) {
+    console.error("removeUserAccount : ", err);
+    next(err);
+  }
+};
+
 module.exports = {
   join,
   checkLoginId,
@@ -312,4 +399,5 @@ module.exports = {
   isAvailablePassword,
   resetPassword,
   mypage,
+  removeUserAccount,
 };
