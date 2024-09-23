@@ -35,8 +35,11 @@ router.post(
  * 퀴즈 결과 api에서 challengeId를 받아야한다.
  * 퀴즈 결과 api에 challengeId는 일반 퀴즈, 무한 퀴즈 챌린지 여부에 따라 challengeId값이 있을수도 없을수도 있다.
  *
- * 유저로부터 무한 퀴즈 챌린지에 대한 id값을 받는다.
- * query param으로 받는다.
+ * 유저로부터 무한 퀴즈 챌린지에 대한 id값을 query param로 받는다.
+ * 첫 1~10번째 퀴즈 문제 세트를 요청 받을 때는 유저 입장에서 기존에 받은 challengeId값이 없으므로 null이다.
+ * 유저가 값을 조작할 수도 있으므로 일정 시간이 지났으면 만료시킨다.
+ * jwt로 하는 것은 어떠한가?
+ *
  *
  * challegeId라는 값으로 받는다.
  * challegeId
