@@ -170,9 +170,41 @@ const { v4: uuidv4 } = require("uuid");
 
 const infiniteChallenge = (req, res, next) => {
   try {
+    //
+    /** TODO:
+     * 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
+     * 2. challengeId가 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
+     * 3. challengeId 주기적으로 확인하여 만료된 challegeId는 제거한다.
+     * - 현재 시간 서버 시간으로 처리
+     * - UUID로 만든 challengeId를 키 값으로 사용
+     * ===
+     * - 무한 퀴즈 챌린지 동안 중복 문제 이슈 처리할지 추후 고려 필요
+     *   - 현재 버젼에서는 중복 발생 가능
+     */
     const newChallengeId = uuidv4();
+    const currentTime = new Date();
 
-    return res.json({ message: "Ok", challengeId: newChallengeId });
+    // 60초 후 시간을 설정
+    const expiredTime = new Date(
+      currentTime.getTime() + 60 * 1000
+    ).toISOString();
+
+    // challengeData 객체 생성
+    const challengeData = {
+      challengeId: newChallengeId,
+      correctStreak: 0,
+      expiredTime: expiredTime, // 60초 후 시간
+      userId: "test",
+      startTime: currentTime.toISOString(), // 현재 시간
+      endTime: null,
+    };
+
+    console.log(challengeData);
+
+    return res.json({
+      message: "Ok",
+      challengeData,
+    });
   } catch (err) {
     console.error(err);
     next(err);
