@@ -7,7 +7,6 @@ const {
   saveQuizResult,
   infiniteChallenge,
 } = require("../controllers/quizController");
-const trimMiddleware = require("../middlewares/trimMiddleware");
 const quizValidators = require("../validators/quizValidators.js");
 
 router.get("/", generateQuiz);
