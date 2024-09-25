@@ -187,8 +187,8 @@ const infiniteChallenge = async (req, res, next) => {
      *   - 현재 버젼에서는 중복 발생 가능
      */
 
-    const { challengeId } = req.query;
     // 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
+    const { challengeId } = req.query;
 
     // 2. challengeId를 못 서버 내에서 찾았거나 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
     // 서버 내에서 못 찾은 경우 ,만료된 경우 내역을 로그로 남긴다. 꼬일 수 있는 부분이므로 추적 가능해야한다.
@@ -223,7 +223,7 @@ const infiniteChallenge = async (req, res, next) => {
 
     return res.json({
       challengeId: newChallengeId,
-      quizzes: quizSet["quizzes"],
+      quizzes: quizSet.quizzes,
     });
   } catch (err) {
     console.error(err);
