@@ -5,6 +5,7 @@ const {
 } = require("../quizGeneration/quizModule");
 const { generateQuizSet } = require("../services/quizService.js");
 const { verifyToken } = require("../services/jwtService.js");
+const { NORMAL_QUIZ_SET_SIZE } = require("../constant/constant.js");
 const pool = require("../db/mysqldb");
 const quizQuery = require("../queries/quizQuery.js");
 const userQuery = require("../queries/userQuery.js");
@@ -20,7 +21,8 @@ const scoreQuery = require("../queries/scoreQuery.js");
 const generateQuiz = async (req, res, next) => {
   try {
     // 퀴즈 세트 랜덤 생성
-    const quizSet = await generateQuizSet();
+
+    const quizSet = await generateQuizSet(NORMAL_QUIZ_SET_SIZE);
 
     return res.json(quizSet);
   } catch (err) {
@@ -167,11 +169,14 @@ const saveQuizResult = async (req, res, next) => {
  *     redis 보관에 비용이 들 수 있으므로 삭제?
  */
 const { v4: uuidv4 } = require("uuid");
+// 0. challengeId를 관리할 자료구조를 만든다. => Map활용
+const quizChallengeIdMap = new Map();
 
-const infiniteChallenge = (req, res, next) => {
+const infiniteChallenge = async (req, res, next) => {
   try {
     //
     /** TODO:
+     * 0. challengeId를 관리할 자료구조를 만든다. => Map활용
      * 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
      * 2. challengeId가 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
      * 3. challengeId 주기적으로 확인하여 만료된 challegeId는 제거한다.
@@ -181,29 +186,44 @@ const infiniteChallenge = (req, res, next) => {
      * - 무한 퀴즈 챌린지 동안 중복 문제 이슈 처리할지 추후 고려 필요
      *   - 현재 버젼에서는 중복 발생 가능
      */
+
+    const { challengeId } = req.query;
+    // 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
+
+    // 2. challengeId를 못 서버 내에서 찾았거나 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
+    // 서버 내에서 못 찾은 경우 ,만료된 경우 내역을 로그로 남긴다. 꼬일 수 있는 부분이므로 추적 가능해야한다.
     const newChallengeId = uuidv4();
+
+    // TODO: 서버 시간대가 제대로 반영되지 않는 문제점 해결
     const currentTime = new Date();
 
-    // 60초 후 시간을 설정
+    // 만료시간을 60초 후 시간을 설정
     const expiredTime = new Date(
       currentTime.getTime() + 60 * 1000
     ).toISOString();
 
     // challengeData 객체 생성
     const challengeData = {
-      challengeId: newChallengeId,
       correctStreak: 0,
       expiredTime: expiredTime, // 60초 후 시간
-      userId: "test",
+      // userId: userId || null,
       startTime: currentTime.toISOString(), // 현재 시간
-      endTime: null,
+      isChallengeActive: true, // 유효 시간 내에서 문제를 맞히는 중일 때만 true, 틀리거나 시간이 지나면 false
     };
 
-    console.log(challengeData);
+    quizChallengeIdMap.set(newChallengeId, challengeData);
+    console.log("quizChallengeIdMap.size : ", quizChallengeIdMap.size);
+    for (const [key, value] of quizChallengeIdMap) {
+      console.log(`Key: `, key, `\nValue : `, value);
+      console.log();
+    }
+
+    const INFINITE_CHALLENGE_QUIZ_SET_SIZE = 1;
+    const quizSet = await generateQuizSet(INFINITE_CHALLENGE_QUIZ_SET_SIZE);
 
     return res.json({
-      message: "Ok",
-      challengeData,
+      challengeId: newChallengeId,
+      quizzes: quizSet["quizzes"],
     });
   } catch (err) {
     console.error(err);
