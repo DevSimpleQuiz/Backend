@@ -2,10 +2,16 @@ const StatusCodes = require("http-status-codes");
 const {
   loadData,
   saveQuizDataToDatabase,
+  quizChallengeIdMap,
+  validateQuizChallengeId,
 } = require("../quizGeneration/quizModule");
 const { generateQuizSet } = require("../services/quizService.js");
 const { verifyToken } = require("../services/jwtService.js");
-const { NORMAL_QUIZ_SET_SIZE } = require("../constant/constant.js");
+const {
+  NORMAL_QUIZ_SET_SIZE,
+  INFINITE_CHALLENGE_QUIZ_SET_SIZE,
+  KST_OFFSET,
+} = require("../constant/constant.js");
 const pool = require("../db/mysqldb");
 const quizQuery = require("../queries/quizQuery.js");
 const userQuery = require("../queries/userQuery.js");
@@ -21,7 +27,6 @@ const scoreQuery = require("../queries/scoreQuery.js");
 const generateQuiz = async (req, res, next) => {
   try {
     // 퀴즈 세트 랜덤 생성
-
     const quizSet = await generateQuizSet(NORMAL_QUIZ_SET_SIZE);
 
     return res.json(quizSet);
@@ -170,7 +175,7 @@ const saveQuizResult = async (req, res, next) => {
  */
 const { v4: uuidv4 } = require("uuid");
 // 0. challengeId를 관리할 자료구조를 만든다. => Map활용
-const quizChallengeIdMap = new Map();
+//
 
 const infiniteChallenge = async (req, res, next) => {
   try {
@@ -189,40 +194,35 @@ const infiniteChallenge = async (req, res, next) => {
 
     // 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
     const { challengeId } = req.query;
+    let currnetChallengeId = challengeId;
 
     // 2. challengeId를 못 서버 내에서 찾았거나 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
     // 서버 내에서 못 찾은 경우 ,만료된 경우 내역을 로그로 남긴다. 꼬일 수 있는 부분이므로 추적 가능해야한다.
-    const newChallengeId = uuidv4();
+    if (validateQuizChallengeId(challengeId) == false) {
+      currnetChallengeId = uuidv4();
 
-    // TODO: 서버 시간대가 제대로 반영되지 않는 문제점 해결
-    const currentTime = new Date();
+      // TODO: 서버 시간대가 제대로 반영되지 않는 문제점 해결
+      // node는 서버 시간을 UTC+0를 기준으로 함,
+      const currentTime = new Date(Date.now() + KST_OFFSET);
 
-    // 만료시간을 60초 후 시간을 설정
-    const expiredTime = new Date(
-      currentTime.getTime() + 60 * 1000
-    ).toISOString();
+      // 만료 시간을 60초 후로 설정 (60초를 밀리초로 변환하여 더함)
+      const expiredTime = new Date(currentTime.getTime() + 60 * 1000); // 60초 후 시간을 밀리초로 계산
 
-    // challengeData 객체 생성
-    const challengeData = {
-      correctStreak: 0,
-      expiredTime: expiredTime, // 60초 후 시간
-      // userId: userId || null,
-      startTime: currentTime.toISOString(), // 현재 시간
-      isChallengeActive: true, // 유효 시간 내에서 문제를 맞히는 중일 때만 true, 틀리거나 시간이 지나면 false
-    };
-
-    quizChallengeIdMap.set(newChallengeId, challengeData);
-    console.log("quizChallengeIdMap.size : ", quizChallengeIdMap.size);
-    for (const [key, value] of quizChallengeIdMap) {
-      console.log(`Key: `, key, `\nValue : `, value);
-      console.log();
+      // challengeData 객체 생성
+      const challengeData = {
+        correctStreak: 0,
+        expiredTime: expiredTime, // 60초 후 시간
+        startTime: currentTime, // 현재 시간
+        isChallengeActive: true, // 유효 시간 내에서 문제를 맞히는 중일 때만 true, 틀리거나 시간이 지나면 false
+      };
+      quizChallengeIdMap.set(currnetChallengeId, challengeData);
     }
 
-    const INFINITE_CHALLENGE_QUIZ_SET_SIZE = 1;
+    console.log("quizChallengeIdMap.size : ", quizChallengeIdMap.size);
     const quizSet = await generateQuizSet(INFINITE_CHALLENGE_QUIZ_SET_SIZE);
 
     return res.json({
-      challengeId: newChallengeId,
+      challengeId: currnetChallengeId,
       quizzes: quizSet.quizzes,
     });
   } catch (err) {
