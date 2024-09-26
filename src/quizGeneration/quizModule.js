@@ -141,7 +141,11 @@ const validateQuizChallengeId = (challengeId) => {
   const challengeData = quizChallengeIdMap.get(challengeId);
   if (!challengeData) return false;
   // 유효시간을 지나지는 않았는가?
-  if (challengeData?.expiredTime < Date.now() + KST_OFFSET) return false;
+  if (challengeData?.expiredTime < Date.now() + KST_OFFSET) {
+    // 유효시간이 지난 challengeId는 메모리에서 삭제한다.
+    quizChallengeIdMap.delete(challengeId);
+    return false;
+  }
 
   return true;
 };
