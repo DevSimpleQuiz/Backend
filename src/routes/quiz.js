@@ -8,6 +8,7 @@ const {
   infiniteChallenge,
 } = require("../controllers/quizController");
 const quizValidators = require("../validators/quizValidators.js");
+const validationMiddleware = require("../middlewares/validationMiddleware.js");
 
 router.get("/", generateQuiz);
 router.get("/:quizId/mark", markQuizAnswer);
@@ -15,6 +16,7 @@ router.post(
   "/result",
   isAuthenticated,
   quizValidators.saveQuizResult,
+  validationMiddleware,
   saveQuizResult
 );
 
