@@ -140,6 +140,8 @@ const validateQuizChallengeId = (challengeId) => {
   // challengeId가 현재 메모리에 있는가?
   const challengeData = quizChallengeIdMap.get(challengeId);
   if (!challengeData) return false;
+  // isChallengeActive flag는 true인가? // 채점에서는 틀렸지만 결과 api에서 반영되게 하기 위해서 challengeId를 지우지 않고 놔둠
+  if (challengeData.isChallengeActive == false) return false;
   // 유효시간을 지나지는 않았는가?
   if (challengeData?.expiredTime < Date.now() + KST_OFFSET) {
     // 유효시간이 지난 challengeId는 메모리에서 삭제한다.
