@@ -63,8 +63,8 @@ CREATE TABLE infinite_quiz_summary (
     FOREIGN KEY (user_id) REFERENCES user(id)  -- user 테이블의 id를 참조
 );
 
--- infinite_quiz_details 테이블 생성
-CREATE TABLE infinite_quiz_details (
+-- infinite_quiz_detail 테이블 생성
+CREATE TABLE infinite_quiz_detail (
     challenge_id CHAR(36) PRIMARY KEY,      -- 도전 ID (UUID 사용 가능)
     user_id INT,                            -- 사용자 ID (Foreign Key)
     correct_streak INT NOT NULL,            -- 해당 도전에서의 연속 정답 기록
@@ -80,7 +80,7 @@ infinite_quiz_summary
 - challenge_count (도전 횟수)
 */
 
-/* infinite_quiz_details
+/* infinite_quiz_detail
 - challenge_id (PK)
 - user_id (FK)
 - correct_streak (해당 도전에서의 기록)
