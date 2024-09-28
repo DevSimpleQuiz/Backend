@@ -67,7 +67,7 @@ CREATE TABLE infinite_quiz_summary (
 CREATE TABLE infinite_quiz_detail (
     challenge_id CHAR(36) PRIMARY KEY,      -- 도전 ID (UUID 사용 가능)
     user_id INT,                            -- 사용자 ID (Foreign Key)
-    correct_streak INT NOT NULL,            -- 해당 도전에서의 연속 정답 기록
+    correct_streak INT DEFAULT 0,            -- 해당 도전에서의 연속 정답 기록
     start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     end_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES user(id)  -- user 테이블의 id를 참조
@@ -93,7 +93,6 @@ infinite_quiz_summary
 - user_id (FK)
 - current_question_count (현재까지 맞춘 문제 수)
 
-
 -- 유저가 문제를 맞출 때마다 current_question_count 증가
 UPDATE infinite_quiz_progress
 SET current_question_count = current_question_count + 1
@@ -103,6 +102,5 @@ WHERE challenge_id = :challenge_id;
 SELECT current_question_count
 FROM infinite_quiz_progress
 WHERE challenge_id = :challenge_id;
-
 
 */
