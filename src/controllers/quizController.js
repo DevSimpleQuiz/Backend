@@ -196,13 +196,6 @@ const infiniteChallenge = async (req, res, next) => {
   try {
     //
     /** TODO:
-     * 0. challengeId를 관리할 자료구조를 만든다. => Map활용
-     * 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
-     * 2. challengeId가 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
-     * 3. challengeId 주기적으로 확인하여 만료된 challengeId는 제거한다.
-     * - 현재 시간 서버 시간으로 처리
-     * - UUID로 만든 challengeId를 키 값으로 사용
-     * ===
      * - 무한 퀴즈 챌린지 동안 중복 문제 이슈 처리할지 추후 고려 필요
      *   - 현재 버젼에서는 중복 발생 가능
      */
@@ -218,12 +211,24 @@ const infiniteChallenge = async (req, res, next) => {
       currnetChallengeId = uuidv4();
       isNewchallengeId = true;
 
-      // TODO: 서버 시간대가 제대로 반영되지 않는 문제점 해결
-      // node는 서버 시간을 UTC+0를 기준으로 함,
       const currentTime = Date.now() + KST_OFFSET;
 
       // 만료 시간을 60초 후로 설정 (60초를 밀리초로 변환하여 더함)
       const expiredTime = currentTime + INIT_EXPIRED_TIME_INTERVAL;
+
+      /* infinite_quiz_detail
+        - challenge_id (PK)
+        - user_id (FK)
+        - correct_streak (해당 도전에서의 기록)
+        - start_time (도전 시작 시간)
+        - end_time (도전 종료 시간)
+      */
+
+      //  무한 퀴즈 챌린지 상세 테이블 기본 값 삽입
+      // `INSERT INTO infinite_quiz_detail (challenge_id, user_id) VALUES(?, ?)`
+
+      //  전체 도전 횟수 1회 증가 처리
+      // `UPDATE infinite_quiz_summary SET challenge_count = challenge_count + 1 WHERE user_id = ?`
 
       // challengeData 객체 생성
       const challengeData = {
