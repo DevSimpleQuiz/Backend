@@ -195,11 +195,13 @@ const infiniteChallenge = async (req, res, next) => {
     // 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
     const { challengeId } = req.query;
     let currnetChallengeId = challengeId;
+    let isNewChallegeId = false;
 
     // 2. challengeId를 못 서버 내에서 찾았거나 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
     // 서버 내에서 못 찾은 경우 ,만료된 경우 내역을 로그로 남긴다. 꼬일 수 있는 부분이므로 추적 가능해야한다.
     if (validateQuizChallengeId(challengeId) == false) {
       currnetChallengeId = uuidv4();
+      isNewChallegeId = true;
 
       // TODO: 서버 시간대가 제대로 반영되지 않는 문제점 해결
       // node는 서버 시간을 UTC+0를 기준으로 함,
@@ -222,8 +224,9 @@ const infiniteChallenge = async (req, res, next) => {
     const quizSet = await generateQuizSet(INFINITE_CHALLENGE_QUIZ_SET_SIZE);
 
     return res.json({
-      challengeId: currnetChallengeId,
       quizzes: quizSet.quizzes,
+      challengeId: currnetChallengeId,
+      isNewChallegeId,
     });
   } catch (err) {
     console.error(err);
