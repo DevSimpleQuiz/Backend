@@ -58,8 +58,8 @@ CREATE TABLE quiz_accuracy_statistics (
 -- infinite_quiz_summary 테이블 생성
 CREATE TABLE infinite_quiz_summary (
     user_id INT PRIMARY KEY,               -- 사용자 ID (Primary Key)
-    correct_streak INT NOT NULL,            -- 최고 연속 정답 기록
-    challenge_count INT NOT NULL,           -- 도전 횟수
+    correct_streak INT DEFAULT 0,            -- 최고 연속 정답 기록
+    challenge_count INT DEFAULT 0,           -- 도전 횟수
     FOREIGN KEY (user_id) REFERENCES user(id)  -- user 테이블의 id를 참조
 );
 
@@ -68,8 +68,8 @@ CREATE TABLE infinite_quiz_details (
     challenge_id CHAR(36) PRIMARY KEY,      -- 도전 ID (UUID 사용 가능)
     user_id INT,                            -- 사용자 ID (Foreign Key)
     correct_streak INT NOT NULL,            -- 해당 도전에서의 연속 정답 기록
-    start_time DATETIME NOT NULL,           -- 도전 시작 시간
-    end_time DATETIME,                      -- 도전 종료 시간 (NULL 가능)
+    start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES user(id)  -- user 테이블의 id를 참조
 );
 
