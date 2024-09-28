@@ -2,9 +2,16 @@ const StatusCodes = require("http-status-codes");
 const {
   loadData,
   saveQuizDataToDatabase,
+  quizChallengeIdMap,
+  validateQuizChallengeId,
 } = require("../quizGeneration/quizModule");
 const { generateQuizSet } = require("../services/quizService.js");
 const { verifyToken } = require("../services/jwtService.js");
+const {
+  NORMAL_QUIZ_SET_SIZE,
+  INFINITE_CHALLENGE_QUIZ_SET_SIZE,
+  KST_OFFSET,
+} = require("../constant/constant.js");
 const pool = require("../db/mysqldb");
 const quizQuery = require("../queries/quizQuery.js");
 const userQuery = require("../queries/userQuery.js");
@@ -20,7 +27,7 @@ const scoreQuery = require("../queries/scoreQuery.js");
 const generateQuiz = async (req, res, next) => {
   try {
     // 퀴즈 세트 랜덤 생성
-    const quizSet = await generateQuizSet();
+    const quizSet = await generateQuizSet(NORMAL_QUIZ_SET_SIZE);
 
     return res.json(quizSet);
   } catch (err) {
@@ -141,8 +148,95 @@ const saveQuizResult = async (req, res, next) => {
   }
 };
 
+/**
+ * challengeId를 UUID를 만들어서 처리
+ * 쿠키 없이 처리?
+ *
+ * - 쿠키 없다면
+ *   - Redis나 map으로 메모리에 일시적으로 challengeId를 관리해야함
+ * - 쿠키 있다면
+ *   - 쿠키에 maxAge를 두어서 관리
+ *
+ * - 퀴즈 채점 때마다, 무한퀴즈 챌린지 여부에 따라 갱신
+ * - challengeId에 타이머를 두는 것이 필요할까?
+ *   - 유저가 값을 탈취해서 위조로 할 수 있는 것을 걸려낼 수 있어야함
+ *   - 채점할 때 무한퀴즈 챌린지인지 확인하는 것이 괜찮을 것인가?
+ *   - 별도 api로 분리하는 것이 나을 것인가?
+ * - 서버입장에서는 유저가 변조할 수 있다
+ *   어떻게 방지할 것인가?
+ *   - 유저가 틀리면 바로 해당 challengeId를 지운다.
+ *   - 퀴즈 제한 시간 15초 이내에 하던 퀴즈를 나오고 새로운 퀴즈를 진행할 때,
+ *     이전에 쓰던 challengeId를 쓴다면?
+ *     채점할 때, 정답을 맞추어야지만 challengeId의 유효시간을 갱신해준다면 처리 가능하지 않을까?
+ *     채점에서 틀리면 바로 challengeId를 삭제한다.
+ *     유효하지 않은 challengeId를 쓰면 무시한다?
+ *     challengeId의 유효시간을 두지 말고, 틀리면 삭제시키는 식으로 처리할 수 있다.
+ *     redis 보관에 비용이 들 수 있으므로 삭제?
+ */
+const { v4: uuidv4 } = require("uuid");
+// 0. challengeId를 관리할 자료구조를 만든다. => Map활용
+//
+
+const infiniteChallenge = async (req, res, next) => {
+  try {
+    //
+    /** TODO:
+     * 0. challengeId를 관리할 자료구조를 만든다. => Map활용
+     * 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
+     * 2. challengeId가 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
+     * 3. challengeId 주기적으로 확인하여 만료된 challegeId는 제거한다.
+     * - 현재 시간 서버 시간으로 처리
+     * - UUID로 만든 challengeId를 키 값으로 사용
+     * ===
+     * - 무한 퀴즈 챌린지 동안 중복 문제 이슈 처리할지 추후 고려 필요
+     *   - 현재 버젼에서는 중복 발생 가능
+     */
+
+    // 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
+    const { challengeId } = req.query;
+    let currnetChallengeId = challengeId;
+    let isNewChallegeId = false;
+
+    // 2. challengeId를 못 서버 내에서 찾았거나 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
+    // 서버 내에서 못 찾은 경우 ,만료된 경우 내역을 로그로 남긴다. 꼬일 수 있는 부분이므로 추적 가능해야한다.
+    if (validateQuizChallengeId(challengeId) == false) {
+      currnetChallengeId = uuidv4();
+      isNewChallegeId = true;
+
+      // TODO: 서버 시간대가 제대로 반영되지 않는 문제점 해결
+      // node는 서버 시간을 UTC+0를 기준으로 함,
+      const currentTime = new Date(Date.now() + KST_OFFSET);
+
+      // 만료 시간을 60초 후로 설정 (60초를 밀리초로 변환하여 더함)
+      const expiredTime = new Date(currentTime.getTime() + 60 * 1000); // 60초 후 시간을 밀리초로 계산
+
+      // challengeData 객체 생성
+      const challengeData = {
+        correctStreak: 0,
+        expiredTime: expiredTime, // 60초 후 시간
+        startTime: currentTime, // 현재 시간
+        isChallengeActive: true, // 유효 시간 내에서 문제를 맞히는 중일 때만 true, 틀리거나 시간이 지나면 false
+      };
+      quizChallengeIdMap.set(currnetChallengeId, challengeData);
+    }
+
+    console.log("quizChallengeIdMap.size : ", quizChallengeIdMap.size);
+    const quizSet = await generateQuizSet(INFINITE_CHALLENGE_QUIZ_SET_SIZE);
+
+    return res.json({
+      quizzes: quizSet.quizzes,
+      challengeId: currnetChallengeId,
+      isNewChallegeId,
+    });
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+};
+
 module.exports = {
   generateQuiz,
   markQuizAnswer,
   saveQuizResult,
+  infiniteChallenge,
 };

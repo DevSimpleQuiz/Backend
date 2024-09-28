@@ -22,6 +22,7 @@ app.use(cors(corsOptions));
 const userRouter = require("./src/routes/user");
 const quizRouter = require("./src/routes/quiz");
 const rankRouter = require("./src/routes/rank");
+const { KST_OFFSET } = require("./src/constant/constant");
 
 app.use("/users", userRouter);
 app.use("/quizzes", quizRouter);
@@ -30,7 +31,6 @@ app.use("/ranks", rankRouter);
 app.use(errorMiddleware);
 
 app.listen(PORT, () => {
-  const currentTime = new Date();
-  console.log(`Server started at: ${currentTime.toISOString()}`);
+  console.log("Server started at: ", new Date(Date.now() + KST_OFFSET));
   console.log(`Server is on ${PORT}`);
 });

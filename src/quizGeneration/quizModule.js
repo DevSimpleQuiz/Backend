@@ -4,8 +4,11 @@ const {
   WORD_QUIZ_TYPE,
   DEFAULT_CORRECT_PEOPLE_COUNT,
   DEFAULT_TOTAL_ATTEMPTS_COUNT_BEFORE_CORRECT,
+  KST_OFFSET,
 } = require("../constant/constant");
 const quizQuery = require("../queries/quizQuery.js");
+
+const quizChallengeIdMap = new Map();
 
 // 메모리에 퀴즈 데이터를 저장할 변수
 let data = [];
@@ -131,4 +134,27 @@ const saveQuizDataToDatabase = async () => {
   }
 };
 
-module.exports = { loadData, saveQuizDataToDatabase };
+const validateQuizChallengeId = (challengeId) => {
+  // challengeId가 유효한가?
+  if (!challengeId) return false;
+  // challengeId가 현재 메모리에 있는가?
+  const challengeData = quizChallengeIdMap.get(challengeId);
+  if (!challengeData) return false;
+  // isChallengeActive flag는 true인가? // 채점에서는 틀렸지만 결과 api에서 반영되게 하기 위해서 challengeId를 지우지 않고 놔둠
+  if (challengeData.isChallengeActive == false) return false;
+  // 유효시간을 지나지는 않았는가?
+  if (challengeData?.expiredTime < Date.now() + KST_OFFSET) {
+    // 유효시간이 지난 challengeId는 메모리에서 삭제한다.
+    quizChallengeIdMap.delete(challengeId);
+    return false;
+  }
+
+  return true;
+};
+
+module.exports = {
+  loadData,
+  saveQuizDataToDatabase,
+  validateQuizChallengeId,
+  quizChallengeIdMap,
+};
