@@ -1,4 +1,5 @@
 const StatusCodes = require("http-status-codes");
+const { v4: uuidv4 } = require("uuid");
 const {
   loadData,
   saveQuizDataToDatabase,
@@ -11,6 +12,8 @@ const {
   NORMAL_QUIZ_SET_SIZE,
   INFINITE_CHALLENGE_QUIZ_SET_SIZE,
   KST_OFFSET,
+  QUIZ_TIMEOUT,
+  INIT_EXPIRED_TIME_INTERVAL,
 } = require("../constant/constant.js");
 const pool = require("../db/mysqldb");
 const quizQuery = require("../queries/quizQuery.js");
@@ -40,6 +43,7 @@ const generateQuiz = async (req, res, next) => {
 const markQuizAnswer = async (req, res, next) => {
   try {
     let userAnswer = req.query?.answer; // 쿼리 파라미터에서 answer 가져오기
+    const challengeId = req.query?.challengeId; // 경로 파라미터에서 quizId 가져오기
     let quizId = req.params.quizId; // 경로 파라미터에서 quizId 가져오기
 
     if (typeof userAnswer === "string") userAnswer = userAnswer.trim();
@@ -68,6 +72,20 @@ const markQuizAnswer = async (req, res, next) => {
 
     const word = getWordQueryResult[0][0]["word"];
     const isCorrectAnswer = word === userAnswer ? true : false;
+    console.log("challengeId : ", challengeId);
+    if (validateQuizChallengeId(challengeId)) {
+      const challengeData = quizChallengeIdMap.get(challengeId);
+      console.log("challengeData : ", challengeData);
+      // TODO: 15초에 대해 const 변수로 처리
+      if (isCorrectAnswer) {
+        challengeData.expiredTime += QUIZ_TIMEOUT;
+        challengeData.correctStreak += 1;
+      } else {
+        challengeData.isChallengeActive = false;
+      }
+      const updatedChallengeData = quizChallengeIdMap.get(challengeId);
+      console.log("updatedChallengeData : ", updatedChallengeData);
+    }
 
     return res.status(StatusCodes.OK).json({
       isCorrectAnswer: isCorrectAnswer,
@@ -173,9 +191,6 @@ const saveQuizResult = async (req, res, next) => {
  *     challengeId의 유효시간을 두지 말고, 틀리면 삭제시키는 식으로 처리할 수 있다.
  *     redis 보관에 비용이 들 수 있으므로 삭제?
  */
-const { v4: uuidv4 } = require("uuid");
-// 0. challengeId를 관리할 자료구조를 만든다. => Map활용
-//
 
 const infiniteChallenge = async (req, res, next) => {
   try {
@@ -184,7 +199,7 @@ const infiniteChallenge = async (req, res, next) => {
      * 0. challengeId를 관리할 자료구조를 만든다. => Map활용
      * 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
      * 2. challengeId가 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
-     * 3. challengeId 주기적으로 확인하여 만료된 challegeId는 제거한다.
+     * 3. challengeId 주기적으로 확인하여 만료된 challengeId는 제거한다.
      * - 현재 시간 서버 시간으로 처리
      * - UUID로 만든 challengeId를 키 값으로 사용
      * ===
@@ -195,26 +210,26 @@ const infiniteChallenge = async (req, res, next) => {
     // 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
     const { challengeId } = req.query;
     let currnetChallengeId = challengeId;
-    let isNewChallegeId = false;
+    let isNewchallengeId = false;
 
     // 2. challengeId를 못 서버 내에서 찾았거나 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
     // 서버 내에서 못 찾은 경우 ,만료된 경우 내역을 로그로 남긴다. 꼬일 수 있는 부분이므로 추적 가능해야한다.
     if (validateQuizChallengeId(challengeId) == false) {
       currnetChallengeId = uuidv4();
-      isNewChallegeId = true;
+      isNewchallengeId = true;
 
       // TODO: 서버 시간대가 제대로 반영되지 않는 문제점 해결
       // node는 서버 시간을 UTC+0를 기준으로 함,
-      const currentTime = new Date(Date.now() + KST_OFFSET);
+      const currentTime = Date.now() + KST_OFFSET;
 
       // 만료 시간을 60초 후로 설정 (60초를 밀리초로 변환하여 더함)
-      const expiredTime = new Date(currentTime.getTime() + 60 * 1000); // 60초 후 시간을 밀리초로 계산
+      const expiredTime = currentTime + INIT_EXPIRED_TIME_INTERVAL;
 
       // challengeData 객체 생성
       const challengeData = {
         correctStreak: 0,
-        expiredTime: expiredTime, // 60초 후 시간
-        startTime: currentTime, // 현재 시간
+        expiredTime: expiredTime,
+        startTime: currentTime,
         isChallengeActive: true, // 유효 시간 내에서 문제를 맞히는 중일 때만 true, 틀리거나 시간이 지나면 false
       };
       quizChallengeIdMap.set(currnetChallengeId, challengeData);
@@ -226,7 +241,7 @@ const infiniteChallenge = async (req, res, next) => {
     return res.json({
       quizzes: quizSet.quizzes,
       challengeId: currnetChallengeId,
-      isNewChallegeId,
+      isNewchallengeId,
     });
   } catch (err) {
     console.error(err);
