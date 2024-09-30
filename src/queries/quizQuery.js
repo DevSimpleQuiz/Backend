@@ -17,3 +17,5 @@ exports.updateQuizStatistics = `UPDATE quiz_accuracy_statistics \
 exports.removeUserSolvedQuizHistory = `DELETE FROM solved_quizzes WHERE user_id = ?`;
 
 exports.addInfiniteChallengeSummary = `INSERT INTO infinite_quiz_summary (user_id) VALUES (?)`;
+exports.addInfiniteQuizChallengeDetail = `INSERT INTO infinite_quiz_detail (challenge_id, user_id) VALUES(?, ?)`;
+exports.increaseInfiniteQuizCount = `UPDATE infinite_quiz_summary SET challenge_count = challenge_count + 1 WHERE user_id = ?`;

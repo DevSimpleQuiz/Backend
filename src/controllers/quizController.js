@@ -151,7 +151,7 @@ const saveQuizResult = async (req, res, next) => {
       }
 
       await connection.commit();
-    } catch (error) {
+    } catch (err) {
       console.error("퀴즈 결과 저장 트렌젝션 쿼리 에러 ,", err);
       await connection.rollback();
       next(err);
@@ -224,11 +224,53 @@ const infiniteChallenge = async (req, res, next) => {
         - end_time (도전 종료 시간)
       */
 
-      //  무한 퀴즈 챌린지 상세 테이블 기본 값 삽입
+      // TODO: 결과를 마지막에 로그인 한 뒤에 반영시키고 싶은 경우, 데이터를 insert into 해야함
+      //  무한 퀴즈 챌린지 상세 테이블 기본 값 삽입, 로그인 된 경우만 처리됨
       // `INSERT INTO infinite_quiz_detail (challenge_id, user_id) VALUES(?, ?)`
+      const token = req.cookies.token;
+      const payload = await verifyToken(token);
+      const userId = payload.id;
 
-      //  전체 도전 횟수 1회 증가 처리
-      // `UPDATE infinite_quiz_summary SET challenge_count = challenge_count + 1 WHERE user_id = ?`
+      if (userId) {
+        // TODO: getUserNumIdByToken service 만들어서 사용
+        const getUserIdResult = await pool.query(userQuery.getUserId, userId);
+        const userNumId = getUserIdResult[0][0]?.id;
+        console.log("userNumId : ", userNumId);
+
+        if (!userNumId) {
+          throw createHttpError(
+            StatusCodes.NOT_FOUND,
+            "사용자 정보를 찾을 수 없습니다."
+          );
+        }
+        // TODO: transaction
+        const connection = await pool.getConnection();
+        try {
+          await connection.beginTransaction();
+
+          await connection.query(quizQuery.addInfiniteQuizChallengeDetail, [
+            currnetChallengeId,
+            userNumId,
+          ]);
+          //  전체 도전 횟수 1회 증가 처리
+          // `UPDATE infinite_quiz_summary SET challenge_count = challenge_count + 1 WHERE user_id = ?`
+          await connection.query(
+            quizQuery.increaseInfiniteQuizCount,
+            userNumId
+          );
+
+          await connection.commit();
+        } catch (err) {
+          console.error(
+            "무한 퀴즈 챌린지 초기 데이터 세팅, 트렌젝션 쿼리 에러 ",
+            err
+          );
+          await connection.rollback();
+          next(err);
+        } finally {
+          connection.release();
+        }
+      }
 
       // challengeData 객체 생성
       const challengeData = {

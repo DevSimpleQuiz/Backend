@@ -126,9 +126,9 @@ const saveQuizDataToDatabase = async () => {
     await connection.commit();
 
     console.log("quiz 데이터 저장 성공");
-  } catch (error) {
+  } catch (err) {
     await connection.rollback();
-    console.error("데이터 저장 중 오류 발생", error);
+    console.error("데이터 저장 중 오류 발생", err);
   } finally {
     connection.release();
   }
