@@ -99,7 +99,13 @@ const markQuizAnswer = async (req, res, next) => {
 
 const saveQuizResult = async (req, res, next) => {
   try {
-    let { totalQuizCount, solvedQuizCount, totalQuizScore, quizId } = req.body;
+    let {
+      totalQuizCount,
+      solvedQuizCount,
+      totalQuizScore,
+      quizId,
+      challengeId,
+    } = req.body;
     const token = req.cookies.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
@@ -148,6 +154,16 @@ const saveQuizResult = async (req, res, next) => {
           totalQuizCount,
           quizId,
         ]);
+      }
+
+      /** TODO: 무한퀴즈챌린지인 경우 처리
+       * - 연속으로 맞힌 최대 문제 개수 DB에 반영(summary 테이블, update 단, 현재 db에 있는 값보다 큰 경우에만 반영)
+       * - 현재까지 맞힌 문제 수 DB에 반영 (detail 테이블, update)
+       */
+      if (!challengeId) {
+        const challengeData = quizChallengeIdMap.get(challengeId);
+        if (challengeData.isChallengeActive == false) {
+        }
       }
 
       await connection.commit();

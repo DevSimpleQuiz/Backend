@@ -134,6 +134,14 @@ const saveQuizDataToDatabase = async () => {
   }
 };
 
+//
+/** TODO: validateQuizChallengeId() 로직 효율화
+ * 채점에서 틀린 경우 유효시간 증가시키지 않음.
+ * 퀴즈 결과 api 호출 이후 db에 데이터 저장된 이후에 메모리에서 삭제되어야하므로 바로 삭제하지는 않음
+ * 대신 isChallegeActive flag를 false로 바꾸어서
+ * 퀴즈 결과 api 호출 없이 메모리에서 지워버리면 유저의 도전 기록을 저장할 수 없으므로 위와 같이 처리함
+ */
+
 const validateQuizChallengeId = (challengeId) => {
   // challengeId가 유효한가?
   if (!challengeId) return false;
