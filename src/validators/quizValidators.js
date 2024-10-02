@@ -1,6 +1,8 @@
 const { param, query, body } = require("express-validator");
 
-// 강제 형변환 미들웨어
+/** 강제 형변환 미들웨어
+ * UUID 문자열 값이 숫자로 시작하는 경우
+ * 강제 형변환 이후 숫자 이후에 있는 문자열 값이 날아가는 문제 발생
 const forceTypeConversion = (req, res, next) => {
   Object.keys(req.body).forEach((key) => {
     const value = req.body[key];
@@ -11,6 +13,7 @@ const forceTypeConversion = (req, res, next) => {
   });
   next();
 };
+*/
 
 // 숫자인지 확인하고, 정수인지 확인
 const ensureInt = (value) => {
@@ -36,7 +39,6 @@ const quizValidators = {
       .escape(),
   ],
   saveQuizResult: [
-    forceTypeConversion,
     body("totalQuizCount")
       .exists()
       .withMessage("응시한 문제 수가 존재해야 합니다.")
@@ -70,6 +72,12 @@ const quizValidators = {
       .withMessage("맞춘 총 점수는 문자열이 아닌 정수여야 합니다.")
       .isInt({ min: 0 })
       .withMessage("맞춘 총 점수는 0 이상의 정수여야 합니다."),
+    body("challengeId")
+      .optional()
+      .notEmpty()
+      .withMessage("챌린지 ID가 존재해야 합니다.")
+      .isUUID()
+      .withMessage("챌린지 ID는 UUID 형식이어야 합니다."),
     body("quizId")
       .exists()
       .withMessage("퀴즈ID가 존재해야 합니다.")
