@@ -66,7 +66,7 @@ CREATE TABLE infinite_quiz_summary (
 -- infinite_quiz_detail 테이블 생성
 CREATE TABLE infinite_quiz_detail (
     challenge_id CHAR(36) PRIMARY KEY,      -- 도전 ID (UUID 사용 가능)
-    user_id INT NOT NULL UNIQUE,                            -- 사용자 ID (Foreign Key)
+    user_id INT NOT NULL,                            -- 사용자 ID (Foreign Key)
     correct_streak INT NOT NULL DEFAULT 0,            -- 해당 도전에서의 연속 정답 기록
     start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     end_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

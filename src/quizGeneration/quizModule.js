@@ -141,7 +141,6 @@ const saveQuizDataToDatabase = async () => {
  * 대신 isChallegeActive flag를 false로 바꾸어서
  * 퀴즈 결과 api 호출 없이 메모리에서 지워버리면 유저의 도전 기록을 저장할 수 없으므로 위와 같이 처리함
  */
-
 const validateQuizChallengeId = (challengeId) => {
   // challengeId가 유효한가?
   if (!challengeId) return false;
@@ -155,6 +154,7 @@ const validateQuizChallengeId = (challengeId) => {
     challengeData.isChallengeActive == false &&
     challengeData?.expiredTime < Date.now() + KST_OFFSET
   ) {
+    // TODO: validate 하는 메서드에서 삭제까지 하게 하는 것은 두 가지 동작, 두 가지 동작 분리하여 처리 필요.
     // 유효시간이 지난 challengeId는 메모리에서 삭제한다.
     quizChallengeIdMap.delete(challengeId);
     return false;

@@ -160,10 +160,30 @@ const saveQuizResult = async (req, res, next) => {
        * - 연속으로 맞힌 최대 문제 개수 DB에 반영(summary 테이블, update 단, 현재 db에 있는 값보다 큰 경우에만 반영)
        * - 현재까지 맞힌 문제 수 DB에 반영 (detail 테이블, update)
        */
-      if (!challengeId) {
+      if (challengeId) {
+        console.log(`challengeId : ${challengeId}`);
         const challengeData = quizChallengeIdMap.get(challengeId);
-        if (challengeData.isChallengeActive == false) {
+        if (!challengeData) {
+          console.log(
+            `${challengeId}, 챌린지 id는 서버에 없는 id 입니다. DB에 이미 저장 되었는지 확인 해주세요.`
+          );
         }
+
+        // detail 테이블에 값 갱신하기, correct streak이 더 늘어난 경우에만 반영됨
+        const updateInfiniteChallengeDetailQuery = `UPDATE infinite_quiz_detail SET correct_streak = ? WHERE challenge_id = ? AND correct_streak < ?`;
+        connection.query(updateInfiniteChallengeDetailQuery, [
+          challengeData.correctStreak,
+          challengeId,
+          challengeData.correctStreak,
+        ]);
+
+        // summary 테이블에 값 갱신하기, correct streak이 더 늘어난 경우에만 반영됨
+        const updateInfiniteChallengeSummaryQuery = `UPDATE infinite_quiz_summary SET correct_streak = ? WHERE user_id = ? AND correct_streak < ?`;
+        connection.query(updateInfiniteChallengeSummaryQuery, [
+          challengeData.correctStreak,
+          userNumId,
+          challengeData.correctStreak,
+        ]);
       }
 
       await connection.commit();
@@ -207,7 +227,6 @@ const saveQuizResult = async (req, res, next) => {
  *     challengeId의 유효시간을 두지 말고, 틀리면 삭제시키는 식으로 처리할 수 있다.
  *     redis 보관에 비용이 들 수 있으므로 삭제?
  */
-
 const infiniteChallenge = async (req, res, next) => {
   try {
     //
@@ -244,10 +263,13 @@ const infiniteChallenge = async (req, res, next) => {
       //  무한 퀴즈 챌린지 상세 테이블 기본 값 삽입, 로그인 된 경우만 처리됨
       // `INSERT INTO infinite_quiz_detail (challenge_id, user_id) VALUES(?, ?)`
       const token = req.cookies.token;
-      const payload = await verifyToken(token);
-      const userId = payload.id;
 
-      if (userId) {
+      console.log("token in infiniteChallenge(): ", token);
+      /**
+       */
+      if (token) {
+        const payload = await verifyToken(token);
+        const userId = payload?.id;
         // TODO: getUserNumIdByToken service 만들어서 사용
         const getUserIdResult = await pool.query(userQuery.getUserId, userId);
         const userNumId = getUserIdResult[0][0]?.id;
@@ -269,7 +291,6 @@ const infiniteChallenge = async (req, res, next) => {
             userNumId,
           ]);
           //  전체 도전 횟수 1회 증가 처리
-          // `UPDATE infinite_quiz_summary SET challenge_count = challenge_count + 1 WHERE user_id = ?`
           await connection.query(
             quizQuery.increaseInfiniteQuizCount,
             userNumId
@@ -287,7 +308,6 @@ const infiniteChallenge = async (req, res, next) => {
           connection.release();
         }
       }
-
       // challengeData 객체 생성
       const challengeData = {
         correctStreak: 0,
