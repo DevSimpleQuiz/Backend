@@ -1,4 +1,4 @@
-const { body } = require("express-validator");
+const { param, query, body } = require("express-validator");
 
 // 강제 형변환 미들웨어
 const forceTypeConversion = (req, res, next) => {
@@ -21,6 +21,20 @@ const ensureInt = (value) => {
 };
 
 const quizValidators = {
+  markQuizAnswer: [
+    param("quizId")
+      .isInt({ min: 1 })
+      .withMessage("퀴즈 id는 양의 정수이어야 합니다."),
+    query("answer")
+      .exists({ checkFalsy: true }) // 빈 문자열, null, undefined 다 걸러냄
+      .withMessage("답변은 필수 항목입니다.")
+      .isString()
+      .withMessage("답변은 문자열이어야 합니다.")
+      .notEmpty()
+      .withMessage("답변은 비어있어서는 안됩니다.")
+      .trim()
+      .escape(),
+  ],
   saveQuizResult: [
     forceTypeConversion,
     body("totalQuizCount")

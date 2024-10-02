@@ -46,17 +46,6 @@ const markQuizAnswer = async (req, res, next) => {
     const challengeId = req.query?.challengeId; // 경로 파라미터에서 quizId 가져오기
     let quizId = req.params.quizId; // 경로 파라미터에서 quizId 가져오기
 
-    if (typeof userAnswer === "string") userAnswer = userAnswer.trim();
-
-    // quizId가 숫자로만 이루어졌는지 확인
-    if (!/^\d+$/.test(quizId)) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: "quiz id는 숫자이어야 합니다.",
-      });
-    }
-
-    quizId = parseInt(quizId);
-
     const getWordQueryResult = await pool.query(quizQuery.getQuizWord, [
       quizId,
     ]);
@@ -202,31 +191,6 @@ const saveQuizResult = async (req, res, next) => {
   }
 };
 
-/**
- * challengeId를 UUID를 만들어서 처리
- * 쿠키 없이 처리?
- *
- * - 쿠키 없다면
- *   - Redis나 map으로 메모리에 일시적으로 challengeId를 관리해야함
- * - 쿠키 있다면
- *   - 쿠키에 maxAge를 두어서 관리
- *
- * - 퀴즈 채점 때마다, 무한퀴즈 챌린지 여부에 따라 갱신
- * - challengeId에 타이머를 두는 것이 필요할까?
- *   - 유저가 값을 탈취해서 위조로 할 수 있는 것을 걸려낼 수 있어야함
- *   - 채점할 때 무한퀴즈 챌린지인지 확인하는 것이 괜찮을 것인가?
- *   - 별도 api로 분리하는 것이 나을 것인가?
- * - 서버입장에서는 유저가 변조할 수 있다
- *   어떻게 방지할 것인가?
- *   - 유저가 틀리면 바로 해당 challengeId를 지운다.
- *   - 퀴즈 제한 시간 15초 이내에 하던 퀴즈를 나오고 새로운 퀴즈를 진행할 때,
- *     이전에 쓰던 challengeId를 쓴다면?
- *     채점할 때, 정답을 맞추어야지만 challengeId의 유효시간을 갱신해준다면 처리 가능하지 않을까?
- *     채점에서 틀리면 바로 challengeId를 삭제한다.
- *     유효하지 않은 challengeId를 쓰면 무시한다?
- *     challengeId의 유효시간을 두지 말고, 틀리면 삭제시키는 식으로 처리할 수 있다.
- *     redis 보관에 비용이 들 수 있으므로 삭제?
- */
 const infiniteChallenge = async (req, res, next) => {
   try {
     //

@@ -11,7 +11,13 @@ const quizValidators = require("../validators/quizValidators.js");
 const validationMiddleware = require("../middlewares/validationMiddleware.js");
 
 router.get("/", generateQuiz);
-router.get("/:quizId/mark", markQuizAnswer);
+// TODO: query param validator추가
+router.get(
+  "/:quizId/mark",
+  quizValidators.markQuizAnswer,
+  validationMiddleware,
+  markQuizAnswer
+);
 router.post(
   "/result",
   isAuthenticated,
