@@ -11,11 +11,17 @@ const {
 const { handleValidationResult } = require("../validators/rankValidators.js");
 
 router.get("/top", topRankersInfo);
+
 router.get("/my", isAuthenticated, myRankInfo);
+
 router.get("/nearby", isAuthenticated, nearRankersInfo);
 
-// TODO: isAuthenticated
-// router.get("/", isAuthenticated, rankValidators, handleValidationResult, rankingPagesInfo);
-router.get("/", rankValidators, handleValidationResult, rankingPagesInfo);
+router.get(
+  "/",
+  isAuthenticated,
+  rankValidators,
+  handleValidationResult,
+  rankingPagesInfo
+);
 
 module.exports = router;

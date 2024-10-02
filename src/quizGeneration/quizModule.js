@@ -148,7 +148,8 @@ const validateQuizChallengeId = (challengeId) => {
   const challengeData = quizChallengeIdMap.get(challengeId);
   console.log("challengeData in validateQuizChallengeId() : ", challengeData);
   if (!challengeData) return false;
-  // isChallengeActive flag는 true인가? // 채점에서는 틀렸지만 결과 api에서 반영되게 하기 위해서 challengeId를 지우지 않고 놔둠
+  // isChallengeActive flag는 true인가?
+  // 채점에서는 틀렸지만 결과 api에서 반영되게 하기 위해서 challengeId를 지우지 않고 놔둠
   // 유효시간을 지나지는 않았는가?
   if (
     challengeData.isChallengeActive == false &&

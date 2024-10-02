@@ -1,21 +1,7 @@
 const { param, query, body } = require("express-validator");
 
-/** 강제 형변환 미들웨어
- * UUID 문자열 값이 숫자로 시작하는 경우
- * 강제 형변환 이후 숫자 이후에 있는 문자열 값이 날아가는 문제 발생
-const forceTypeConversion = (req, res, next) => {
-  Object.keys(req.body).forEach((key) => {
-    const value = req.body[key];
-    const numberValue = parseFloat(value);
-    if (!isNaN(numberValue) && Number.isInteger(numberValue)) {
-      req.body[key] = numberValue;
-    }
-  });
-  next();
-};
-*/
-
 // 숫자인지 확인하고, 정수인지 확인
+// TODO: isInt()와의 차이점 확인, 레거시 코드인가?
 const ensureInt = (value) => {
   if (!isNaN(value) && Number.isInteger(parseFloat(value))) {
     return true;
@@ -29,7 +15,7 @@ const quizValidators = {
       .isInt({ min: 1 })
       .withMessage("퀴즈 id는 양의 정수이어야 합니다."),
     query("answer")
-      .exists({ checkFalsy: true }) // 빈 문자열, null, undefined 다 걸러냄
+      .exists({ checkFalsy: true })
       .withMessage("답변은 필수 항목입니다.")
       .isString()
       .withMessage("답변은 문자열이어야 합니다.")

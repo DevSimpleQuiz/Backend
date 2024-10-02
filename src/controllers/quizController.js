@@ -20,7 +20,7 @@ const quizQuery = require("../queries/quizQuery.js");
 const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 
-// TODO: RDB 또는 REDIS로 전환
+// TODO: RDB, REDIS 버젼 성능 측정
 (async () => {
   // 퀴즈용 엑셀 파일 로드, 최초 한번만 호출
   await loadData("data/words.xlsx");
