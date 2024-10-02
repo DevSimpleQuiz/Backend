@@ -40,8 +40,11 @@ const gerRankInfo = async (myUserId) => {
     const idx = myRank - 1;
 
     return {
-      myRank: myRank,
-      solvedCount: scoreInfos[idx]["total_solved_count"],
+      rank: myRank,
+      score: scoreInfos[idx]["total_score"], // 현재까지 총 점수
+      totalQuizCount: scoreInfos[idx]["total_quiz_count"], // 지금까지 푼 문제 수
+      totalSolvedQuizCount: scoreInfos[idx]["total_solved_count"],
+      // TODO:challengeCount, Join으로 묶는 것이 맞을 것인가?
     };
   } catch (err) {
     console.error(err);

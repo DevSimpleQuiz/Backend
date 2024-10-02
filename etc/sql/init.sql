@@ -72,35 +72,3 @@ CREATE TABLE infinite_quiz_detail (
     end_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES user(id)  -- user 테이블의 id를 참조
 );
-
-/* infinite_quiz_summary
-infinite_quiz_summary
-- user_id (PK)
-- correct_streak (최고 기록)
-- challenge_count (도전 횟수)
-*/
-
-/* infinite_quiz_detail
-- challenge_id (PK)
-- user_id (FK)
-- correct_streak (해당 도전에서의 기록)
-- start_time (도전 시작 시간)
-- end_time (도전 종료 시간)
-*/
-
-/* infinite_quiz_progress
-- challenge_id (PK, FK)
-- user_id (FK)
-- current_question_count (현재까지 맞춘 문제 수)
-
--- 유저가 문제를 맞출 때마다 current_question_count 증가
-UPDATE infinite_quiz_progress
-SET current_question_count = current_question_count + 1
-WHERE challenge_id = :challenge_id;
-
--- 현재까지 맞춘 문제 수 확인
-SELECT current_question_count
-FROM infinite_quiz_progress
-WHERE challenge_id = :challenge_id;
-
-*/

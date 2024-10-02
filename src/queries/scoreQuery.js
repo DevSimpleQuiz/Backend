@@ -6,6 +6,8 @@ exports.updateScoreInfo = `UPDATE score \
                             WHERE user_id = ?`;
 exports.addScoreInfo = `INSERT INTO score (user_id) VALUES (?)`;
 exports.getAllrankInfo = `SELECT user_id, total_quiz_count, total_solved_count, total_score FROM score ORDER BY totaL_score DESC, user_id ASC`;
+// TODO: challenge_count 가져올 join query 필요
+// exports.getMyPageRanknfo = `SELECT user_id, total_quiz_count, total_solved_count, total_score, challenge_count FROM score s JOIN infinite_quiz_summary iqs ON iqs.user_id = s.user_id  ORDER BY totaL_score DESC, user_id ASC`;
 exports.getRankingPageItemsCount = `SELECT COUNT(id) AS totalItemCount FROM score`;
 exports.getRankingPagesInfo = `SELECT u.user_id AS id, \
                                     s.total_score AS score, \

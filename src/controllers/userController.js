@@ -275,12 +275,7 @@ const mypage = async (req, res, next) => {
     const payload = await verifyToken(token);
     const userId = payload.id;
     const userIdResult = await pool.query(userQuery.getUserId, userId);
-    console.log("userIdResult : ", userIdResult);
-    console.log("userIdResult[0] : ", userIdResult[0]);
-    console.log("userIdResult[0][0] : ", userIdResult[0][0]);
     const userNumId = userIdResult[0][0]?.id;
-
-    console.log("userNumId : ", userNumId);
 
     if (!userNumId) {
       throw createHttpError(
@@ -301,8 +296,11 @@ const mypage = async (req, res, next) => {
 
     const mypageInfo = {
       id: userId,
-      myRank: myRankInfo["myRank"],
-      solvedCount: myRankInfo["solvedCount"],
+      rank: myRankInfo["rank"],
+      score: myRankInfo["score"], // 현재까지 총 점수
+      totalQuizCount: myRankInfo["totalQuizCount"], // 지금까지 푼 문제 수
+      totalSolvedQuizCount: myRankInfo["totalSolvedQuizCount"],
+      challengeCount: NaN, // 지금까지 무한 퀴즈 챌린지 한 횟수
     };
     console.log(`mypageInfo : `, mypageInfo);
 
