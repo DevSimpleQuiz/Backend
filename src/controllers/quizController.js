@@ -20,7 +20,7 @@ const quizQuery = require("../queries/quizQuery.js");
 const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 
-// TODO: RDB 또는 REDIS로 전환
+// TODO: RDB, REDIS 버젼 성능 측정
 (async () => {
   // 퀴즈용 엑셀 파일 로드, 최초 한번만 호출
   await loadData("data/words.xlsx");
@@ -39,24 +39,13 @@ const generateQuiz = async (req, res, next) => {
   }
 };
 
-// TODO: service에서 결과 값 유형이 두 가지 이상인 경우의 처리하는 법 찾기(찾고자 하던 데이터를 찾았을 떄, 못찾았을 때)
 const markQuizAnswer = async (req, res, next) => {
   try {
-    let userAnswer = req.query?.answer; // 쿼리 파라미터에서 answer 가져오기
-    const challengeId = req.query?.challengeId; // 경로 파라미터에서 quizId 가져오기
-    let quizId = req.params.quizId; // 경로 파라미터에서 quizId 가져오기
+    let userAnswer = req.query?.answer;
+    const challengeId = req.query?.challengeId;
+    let quizId = req.params.quizId;
 
-    if (typeof userAnswer === "string") userAnswer = userAnswer.trim();
-
-    // quizId가 숫자로만 이루어졌는지 확인
-    if (!/^\d+$/.test(quizId)) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: "quiz id는 숫자이어야 합니다.",
-      });
-    }
-
-    quizId = parseInt(quizId);
-
+    // TODO: service로 분리
     const getWordQueryResult = await pool.query(quizQuery.getQuizWord, [
       quizId,
     ]);
@@ -76,7 +65,6 @@ const markQuizAnswer = async (req, res, next) => {
     if (validateQuizChallengeId(challengeId)) {
       const challengeData = quizChallengeIdMap.get(challengeId);
       console.log("challengeData : ", challengeData);
-      // TODO: 15초에 대해 const 변수로 처리
       if (isCorrectAnswer) {
         challengeData.expiredTime += QUIZ_TIMEOUT;
         challengeData.correctStreak += 1;
@@ -99,7 +87,13 @@ const markQuizAnswer = async (req, res, next) => {
 
 const saveQuizResult = async (req, res, next) => {
   try {
-    let { totalQuizCount, solvedQuizCount, totalQuizScore, quizId } = req.body;
+    let {
+      totalQuizCount,
+      solvedQuizCount,
+      totalQuizScore,
+      quizId,
+      challengeId,
+    } = req.body;
     const token = req.cookies.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
@@ -150,8 +144,37 @@ const saveQuizResult = async (req, res, next) => {
         ]);
       }
 
+      /** TODO: 무한퀴즈챌린지인 경우 처리
+       * - 연속으로 맞힌 최대 문제 개수 DB에 반영(summary 테이블, update 단, 현재 db에 있는 값보다 큰 경우에만 반영)
+       * - 현재까지 맞힌 문제 수 DB에 반영 (detail 테이블, update)
+       */
+      if (challengeId) {
+        console.log("challengeId : ", challengeId);
+        const challengeData = quizChallengeIdMap.get(challengeId);
+        console.log("challengeData in saveQuizResult() : ", challengeData);
+        if (!challengeData) {
+          console.log(
+            `${challengeId}, 챌린지 id는 서버에 없는 id 입니다. DB에 이미 저장 되었는지 확인 해주세요.`
+          );
+        }
+
+        // detail 테이블에 값 갱신하기, correct streak이 더 늘어난 경우에만 반영됨
+        connection.query(quizQuery.updateInfiniteChallengeDetail, [
+          challengeData.correctStreak,
+          challengeId,
+          challengeData.correctStreak,
+        ]);
+
+        // summary 테이블에 값 갱신하기, correct streak이 더 늘어난 경우에만 반영됨
+        connection.query(quizQuery.updateInfiniteChallengeSummary, [
+          challengeData.correctStreak,
+          userNumId,
+          challengeData.correctStreak,
+        ]);
+      }
+
       await connection.commit();
-    } catch (error) {
+    } catch (err) {
       console.error("퀴즈 결과 저장 트렌젝션 쿼리 에러 ,", err);
       await connection.rollback();
       next(err);
@@ -166,43 +189,10 @@ const saveQuizResult = async (req, res, next) => {
   }
 };
 
-/**
- * challengeId를 UUID를 만들어서 처리
- * 쿠키 없이 처리?
- *
- * - 쿠키 없다면
- *   - Redis나 map으로 메모리에 일시적으로 challengeId를 관리해야함
- * - 쿠키 있다면
- *   - 쿠키에 maxAge를 두어서 관리
- *
- * - 퀴즈 채점 때마다, 무한퀴즈 챌린지 여부에 따라 갱신
- * - challengeId에 타이머를 두는 것이 필요할까?
- *   - 유저가 값을 탈취해서 위조로 할 수 있는 것을 걸려낼 수 있어야함
- *   - 채점할 때 무한퀴즈 챌린지인지 확인하는 것이 괜찮을 것인가?
- *   - 별도 api로 분리하는 것이 나을 것인가?
- * - 서버입장에서는 유저가 변조할 수 있다
- *   어떻게 방지할 것인가?
- *   - 유저가 틀리면 바로 해당 challengeId를 지운다.
- *   - 퀴즈 제한 시간 15초 이내에 하던 퀴즈를 나오고 새로운 퀴즈를 진행할 때,
- *     이전에 쓰던 challengeId를 쓴다면?
- *     채점할 때, 정답을 맞추어야지만 challengeId의 유효시간을 갱신해준다면 처리 가능하지 않을까?
- *     채점에서 틀리면 바로 challengeId를 삭제한다.
- *     유효하지 않은 challengeId를 쓰면 무시한다?
- *     challengeId의 유효시간을 두지 말고, 틀리면 삭제시키는 식으로 처리할 수 있다.
- *     redis 보관에 비용이 들 수 있으므로 삭제?
- */
-
 const infiniteChallenge = async (req, res, next) => {
   try {
     //
     /** TODO:
-     * 0. challengeId를 관리할 자료구조를 만든다. => Map활용
-     * 1. 요청에 challengeId가 있고 만료되지 않았다면 해당 challengeId를 재활용한다.
-     * 2. challengeId가 만료되었다면 기존 challengeId는 제거하며 새로운 challengeId를 만든다.
-     * 3. challengeId 주기적으로 확인하여 만료된 challengeId는 제거한다.
-     * - 현재 시간 서버 시간으로 처리
-     * - UUID로 만든 challengeId를 키 값으로 사용
-     * ===
      * - 무한 퀴즈 챌린지 동안 중복 문제 이슈 처리할지 추후 고려 필요
      *   - 현재 버젼에서는 중복 발생 가능
      */
@@ -218,13 +208,59 @@ const infiniteChallenge = async (req, res, next) => {
       currnetChallengeId = uuidv4();
       isNewchallengeId = true;
 
-      // TODO: 서버 시간대가 제대로 반영되지 않는 문제점 해결
-      // node는 서버 시간을 UTC+0를 기준으로 함,
       const currentTime = Date.now() + KST_OFFSET;
 
       // 만료 시간을 60초 후로 설정 (60초를 밀리초로 변환하여 더함)
       const expiredTime = currentTime + INIT_EXPIRED_TIME_INTERVAL;
 
+      // TODO: 결과를 마지막에 로그인 한 뒤에 반영시키고 싶은 경우, 데이터를 insert into 해야함
+      //  무한 퀴즈 챌린지 상세 테이블 기본 값 삽입, 로그인 된 경우만 처리됨
+      const token = req.cookies.token;
+
+      console.log("token in infiniteChallenge(): ", token);
+      /**
+       */
+      if (token) {
+        const payload = await verifyToken(token);
+        const userId = payload?.id;
+        // TODO: getUserNumIdByToken service 만들어서 사용
+        const getUserIdResult = await pool.query(userQuery.getUserId, userId);
+        const userNumId = getUserIdResult[0][0]?.id;
+        console.log("userNumId : ", userNumId);
+
+        if (!userNumId) {
+          throw createHttpError(
+            StatusCodes.NOT_FOUND,
+            "사용자 정보를 찾을 수 없습니다."
+          );
+        }
+        // TODO: transaction
+        const connection = await pool.getConnection();
+        try {
+          await connection.beginTransaction();
+
+          await connection.query(quizQuery.addInfiniteQuizChallengeDetail, [
+            currnetChallengeId,
+            userNumId,
+          ]);
+          //  전체 도전 횟수 1회 증가 처리
+          await connection.query(
+            quizQuery.increaseInfiniteQuizCount,
+            userNumId
+          );
+
+          await connection.commit();
+        } catch (err) {
+          console.error(
+            "무한 퀴즈 챌린지 초기 데이터 세팅, 트렌젝션 쿼리 에러 ",
+            err
+          );
+          await connection.rollback();
+          next(err);
+        } finally {
+          connection.release();
+        }
+      }
       // challengeData 객체 생성
       const challengeData = {
         correctStreak: 0,

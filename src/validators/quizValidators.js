@@ -1,18 +1,7 @@
-const { body } = require("express-validator");
-
-// 강제 형변환 미들웨어
-const forceTypeConversion = (req, res, next) => {
-  Object.keys(req.body).forEach((key) => {
-    const value = req.body[key];
-    const numberValue = parseFloat(value);
-    if (!isNaN(numberValue) && Number.isInteger(numberValue)) {
-      req.body[key] = numberValue;
-    }
-  });
-  next();
-};
+const { param, query, body } = require("express-validator");
 
 // 숫자인지 확인하고, 정수인지 확인
+// TODO: isInt()와의 차이점 확인, 레거시 코드인가?
 const ensureInt = (value) => {
   if (!isNaN(value) && Number.isInteger(parseFloat(value))) {
     return true;
@@ -21,8 +10,21 @@ const ensureInt = (value) => {
 };
 
 const quizValidators = {
+  markQuizAnswer: [
+    param("quizId")
+      .isInt({ min: 1 })
+      .withMessage("퀴즈 id는 양의 정수이어야 합니다."),
+    query("answer")
+      .exists({ checkFalsy: true })
+      .withMessage("답변은 필수 항목입니다.")
+      .isString()
+      .withMessage("답변은 문자열이어야 합니다.")
+      .notEmpty()
+      .withMessage("답변은 비어있어서는 안됩니다.")
+      .trim()
+      .escape(),
+  ],
   saveQuizResult: [
-    forceTypeConversion,
     body("totalQuizCount")
       .exists()
       .withMessage("응시한 문제 수가 존재해야 합니다.")
@@ -56,6 +58,12 @@ const quizValidators = {
       .withMessage("맞춘 총 점수는 문자열이 아닌 정수여야 합니다.")
       .isInt({ min: 0 })
       .withMessage("맞춘 총 점수는 0 이상의 정수여야 합니다."),
+    body("challengeId")
+      .optional()
+      .notEmpty()
+      .withMessage("챌린지 ID가 존재해야 합니다.")
+      .isUUID()
+      .withMessage("챌린지 ID는 UUID 형식이어야 합니다."),
     body("quizId")
       .exists()
       .withMessage("퀴즈ID가 존재해야 합니다.")

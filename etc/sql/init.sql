@@ -1,5 +1,5 @@
 -- 기존 데이터베이스 제거
-DROP DATABASE devsimplequiz;
+DROP DATABASE IF EXISTS devsimplequiz;
 
 -- 데이터베이스 생성
 CREATE DATABASE devsimplequiz;
@@ -50,9 +50,27 @@ CREATE TABLE solved_quizzes (
 -- 퀴즈 정답률 관련 데이터 테이블 생성
 CREATE TABLE quiz_accuracy_statistics (
     quiz_id INT PRIMARY KEY,
-    correct_people_count INT DEFAULT 0,
-    total_attempts_count_before_correct INT DEFAULT 0,
+    correct_people_count INT NOT NULL DEFAULT 0,
+    total_attempts_count_before_correct INT NOT NULL DEFAULT 0,
     FOREIGN KEY (quiz_id) REFERENCES quiz (id)
+);
+
+-- infinite_quiz_summary 테이블 생성
+CREATE TABLE infinite_quiz_summary (
+    user_id INT PRIMARY KEY,               -- 사용자 ID (Primary Key)
+    correct_streak INT DEFAULT 0,            -- 최고 연속 정답 기록
+    challenge_count INT DEFAULT 0,           -- 도전 횟수
+    FOREIGN KEY (user_id) REFERENCES user(id)  -- user 테이블의 id를 참조
+);
+
+-- infinite_quiz_detail 테이블 생성
+CREATE TABLE infinite_quiz_detail (
+    challenge_id CHAR(36) PRIMARY KEY,      -- 도전 ID (UUID 사용 가능)
+    user_id INT NOT NULL,                            -- 사용자 ID (Foreign Key)
+    correct_streak INT NOT NULL DEFAULT 0,            -- 해당 도전에서의 연속 정답 기록
+    start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(id)  -- user 테이블의 id를 참조
 );
 
 /* infinite_quiz_summary
@@ -62,7 +80,7 @@ infinite_quiz_summary
 - challenge_count (도전 횟수)
 */
 
-/* infinite_quiz_details
+/* infinite_quiz_detail
 - challenge_id (PK)
 - user_id (FK)
 - correct_streak (해당 도전에서의 기록)
@@ -75,7 +93,6 @@ infinite_quiz_summary
 - user_id (FK)
 - current_question_count (현재까지 맞춘 문제 수)
 
-
 -- 유저가 문제를 맞출 때마다 current_question_count 증가
 UPDATE infinite_quiz_progress
 SET current_question_count = current_question_count + 1
@@ -85,6 +102,5 @@ WHERE challenge_id = :challenge_id;
 SELECT current_question_count
 FROM infinite_quiz_progress
 WHERE challenge_id = :challenge_id;
-
 
 */

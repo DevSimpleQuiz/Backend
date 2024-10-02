@@ -15,3 +15,10 @@ exports.updateQuizStatistics = `UPDATE quiz_accuracy_statistics \
                                         total_attempts_count_before_correct = total_attempts_count_before_correct + ? \
                                     WHERE quiz_id = ?`;
 exports.removeUserSolvedQuizHistory = `DELETE FROM solved_quizzes WHERE user_id = ?`;
+
+exports.addInfiniteChallengeSummary = `INSERT INTO infinite_quiz_summary (user_id) VALUES (?)`;
+exports.addInfiniteQuizChallengeDetail = `INSERT INTO infinite_quiz_detail (challenge_id, user_id) VALUES(?, ?)`;
+exports.increaseInfiniteQuizCount = `UPDATE infinite_quiz_summary SET challenge_count = challenge_count + 1 WHERE user_id = ?`;
+
+exports.updateInfiniteChallengeDetail = `UPDATE infinite_quiz_detail SET correct_streak = ? WHERE challenge_id = ? AND correct_streak < ?`;
+exports.updateInfiniteChallengeSummary = `UPDATE infinite_quiz_summary SET correct_streak = ? WHERE user_id = ? AND correct_streak < ?`;

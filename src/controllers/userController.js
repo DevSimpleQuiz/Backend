@@ -47,6 +47,8 @@ const join = async (req, res, next) => {
         );
       }
       await connection.query(scoreQuery.addScoreInfo, newUserId);
+      await connection.query(quizQuery.addInfiniteChallengeSummary, newUserId);
+
       await connection.commit();
     } catch (err) {
       console.error("회원가입 트렌젝션 쿼리 에러 ,", err);

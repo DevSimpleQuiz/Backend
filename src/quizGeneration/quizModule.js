@@ -126,14 +126,21 @@ const saveQuizDataToDatabase = async () => {
     await connection.commit();
 
     console.log("quiz 데이터 저장 성공");
-  } catch (error) {
+  } catch (err) {
     await connection.rollback();
-    console.error("데이터 저장 중 오류 발생", error);
+    console.error("데이터 저장 중 오류 발생", err);
   } finally {
     connection.release();
   }
 };
 
+//
+/** TODO: validateQuizChallengeId() 로직 효율화
+ * 채점에서 틀린 경우 유효시간 증가시키지 않음.
+ * 퀴즈 결과 api 호출 이후 db에 데이터 저장된 이후에 메모리에서 삭제되어야하므로 바로 삭제하지는 않음
+ * 대신 isChallegeActive flag를 false로 바꾸어서
+ * 퀴즈 결과 api 호출 없이 메모리에서 지워버리면 유저의 도전 기록을 저장할 수 없으므로 위와 같이 처리함
+ */
 const validateQuizChallengeId = (challengeId) => {
   // challengeId가 유효한가?
   if (!challengeId) return false;
@@ -141,12 +148,14 @@ const validateQuizChallengeId = (challengeId) => {
   const challengeData = quizChallengeIdMap.get(challengeId);
   console.log("challengeData in validateQuizChallengeId() : ", challengeData);
   if (!challengeData) return false;
-  // isChallengeActive flag는 true인가? // 채점에서는 틀렸지만 결과 api에서 반영되게 하기 위해서 challengeId를 지우지 않고 놔둠
+  // isChallengeActive flag는 true인가?
+  // 채점에서는 틀렸지만 결과 api에서 반영되게 하기 위해서 challengeId를 지우지 않고 놔둠
   // 유효시간을 지나지는 않았는가?
   if (
     challengeData.isChallengeActive == false &&
     challengeData?.expiredTime < Date.now() + KST_OFFSET
   ) {
+    // TODO: validate 하는 메서드에서 삭제까지 하게 하는 것은 두 가지 동작, 두 가지 동작 분리하여 처리 필요.
     // 유효시간이 지난 challengeId는 메모리에서 삭제한다.
     quizChallengeIdMap.delete(challengeId);
     return false;
