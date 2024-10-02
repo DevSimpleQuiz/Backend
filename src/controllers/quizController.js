@@ -39,13 +39,13 @@ const generateQuiz = async (req, res, next) => {
   }
 };
 
-// TODO: service에서 결과 값 유형이 두 가지 이상인 경우의 처리하는 법 찾기(찾고자 하던 데이터를 찾았을 떄, 못찾았을 때)
 const markQuizAnswer = async (req, res, next) => {
   try {
-    let userAnswer = req.query?.answer; // 쿼리 파라미터에서 answer 가져오기
-    const challengeId = req.query?.challengeId; // 경로 파라미터에서 quizId 가져오기
-    let quizId = req.params.quizId; // 경로 파라미터에서 quizId 가져오기
+    let userAnswer = req.query?.answer;
+    const challengeId = req.query?.challengeId;
+    let quizId = req.params.quizId;
 
+    // TODO: service로 분리
     const getWordQueryResult = await pool.query(quizQuery.getQuizWord, [
       quizId,
     ]);
@@ -65,7 +65,6 @@ const markQuizAnswer = async (req, res, next) => {
     if (validateQuizChallengeId(challengeId)) {
       const challengeData = quizChallengeIdMap.get(challengeId);
       console.log("challengeData : ", challengeData);
-      // TODO: 15초에 대해 const 변수로 처리
       if (isCorrectAnswer) {
         challengeData.expiredTime += QUIZ_TIMEOUT;
         challengeData.correctStreak += 1;
@@ -150,8 +149,9 @@ const saveQuizResult = async (req, res, next) => {
        * - 현재까지 맞힌 문제 수 DB에 반영 (detail 테이블, update)
        */
       if (challengeId) {
-        console.log(`challengeId : ${challengeId}`);
+        console.log("challengeId : ", challengeId);
         const challengeData = quizChallengeIdMap.get(challengeId);
+        console.log("challengeData in saveQuizResult() : ", challengeData);
         if (!challengeData) {
           console.log(
             `${challengeId}, 챌린지 id는 서버에 없는 id 입니다. DB에 이미 저장 되었는지 확인 해주세요.`
@@ -159,16 +159,14 @@ const saveQuizResult = async (req, res, next) => {
         }
 
         // detail 테이블에 값 갱신하기, correct streak이 더 늘어난 경우에만 반영됨
-        const updateInfiniteChallengeDetailQuery = `UPDATE infinite_quiz_detail SET correct_streak = ? WHERE challenge_id = ? AND correct_streak < ?`;
-        connection.query(updateInfiniteChallengeDetailQuery, [
+        connection.query(quizQuery.updateInfiniteChallengeDetail, [
           challengeData.correctStreak,
           challengeId,
           challengeData.correctStreak,
         ]);
 
         // summary 테이블에 값 갱신하기, correct streak이 더 늘어난 경우에만 반영됨
-        const updateInfiniteChallengeSummaryQuery = `UPDATE infinite_quiz_summary SET correct_streak = ? WHERE user_id = ? AND correct_streak < ?`;
-        connection.query(updateInfiniteChallengeSummaryQuery, [
+        connection.query(quizQuery.updateInfiniteChallengeSummary, [
           challengeData.correctStreak,
           userNumId,
           challengeData.correctStreak,
@@ -215,17 +213,8 @@ const infiniteChallenge = async (req, res, next) => {
       // 만료 시간을 60초 후로 설정 (60초를 밀리초로 변환하여 더함)
       const expiredTime = currentTime + INIT_EXPIRED_TIME_INTERVAL;
 
-      /* infinite_quiz_detail
-        - challenge_id (PK)
-        - user_id (FK)
-        - correct_streak (해당 도전에서의 기록)
-        - start_time (도전 시작 시간)
-        - end_time (도전 종료 시간)
-      */
-
       // TODO: 결과를 마지막에 로그인 한 뒤에 반영시키고 싶은 경우, 데이터를 insert into 해야함
       //  무한 퀴즈 챌린지 상세 테이블 기본 값 삽입, 로그인 된 경우만 처리됨
-      // `INSERT INTO infinite_quiz_detail (challenge_id, user_id) VALUES(?, ?)`
       const token = req.cookies.token;
 
       console.log("token in infiniteChallenge(): ", token);
