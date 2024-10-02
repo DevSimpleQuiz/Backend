@@ -4,6 +4,19 @@ const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 const { StatusCodes } = require("http-status-codes");
 
+const getMyRank = async (userId) => {
+  try {
+    const result = await pool.query(scoreQuery.getMyRank, userId);
+    return result[0][0]["user_rank"];
+  } catch (err) {
+    console.error(err);
+    throw createHttpError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Internal Server Error"
+    );
+  }
+};
+
 const findMyRank = async (scoreInfos, userId) => {
   if (!scoreInfos || scoreInfos.length === 0) {
     return -1;
@@ -22,29 +35,18 @@ const findMyRank = async (scoreInfos, userId) => {
  * 전체 순위 계산 이후,
  * 나의 순위 가져오기
  */
-const gerRankInfo = async (myUserId) => {
+const gerMypageInfo = async (myUserId) => {
   try {
-    const queryResult = await pool.query(scoreQuery.getAllrankInfo);
-    const scoreInfos = queryResult[0];
-    const myRank = await findMyRank(scoreInfos, myUserId);
-
-    // 아직 퀴즈를 풀지 않아서 데이터가 없는 경우.
-    if (myRank === -1) {
-      console.log(`Fatal: ${myUserId}유저의 랭킹 정보를 찾을 수 없습니다.`);
-      return {
-        myRank: scoreInfos.length + 1,
-        solvedCount: 0,
-      };
-    }
-
-    const idx = myRank - 1;
+    const queryResult = await pool.query(scoreQuery.getMypageInfo, myUserId);
+    const scoreInfo = queryResult[0][0];
+    const myRank = await getMyRank(myUserId);
 
     return {
       rank: myRank,
-      score: scoreInfos[idx]["total_score"], // 현재까지 총 점수
-      totalQuizCount: scoreInfos[idx]["total_quiz_count"], // 지금까지 푼 문제 수
-      totalSolvedQuizCount: scoreInfos[idx]["total_solved_count"],
-      // TODO:challengeCount, Join으로 묶는 것이 맞을 것인가?
+      score: scoreInfo["total_score"], // 현재까지 총 점수
+      totalQuizCount: scoreInfo["total_quiz_count"], // 지금까지 푼 문제 수
+      totalSolvedQuizCount: scoreInfo["total_solved_count"],
+      challengeCount: scoreInfo["challenge_count"],
     };
   } catch (err) {
     console.error(err);
@@ -55,6 +57,7 @@ const gerRankInfo = async (myUserId) => {
   }
 };
 
+// TODO: getMyRank()를 이용하는 방향으로 변경
 const getMyRankInfo = async (scoreInfos, userId) => {
   const getUserIdResult = await pool.query(userQuery.getUserId, userId);
   const userNumId = getUserIdResult[0][0]?.id;
@@ -209,7 +212,8 @@ const getRankingPagesInfo = async (page, limit) => {
 };
 
 module.exports = {
-  gerRankInfo,
+  gerMypageInfo,
+  getMyRank,
   getMyRankInfo,
   topThreeRankerInfo,
   nearThreeRankerInfo,
