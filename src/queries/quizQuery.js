@@ -15,6 +15,8 @@ exports.updateQuizStatistics = `UPDATE quiz_accuracy_statistics \
                                         total_attempts_count_before_correct = total_attempts_count_before_correct + ? \
                                     WHERE quiz_id = ?`;
 exports.removeUserSolvedQuizHistory = `DELETE FROM solved_quizzes WHERE user_id = ?`;
+exports.removeUserInfiniteQuizDetail = `DELETE FROM infinite_quiz_detail WHERE user_id = ?`;
+exports.removeUserInfiniteQuizSummary = `DELETE FROM infinite_quiz_summary WHERE user_id = ?`;
 
 exports.addInfiniteChallengeSummary = `INSERT INTO infinite_quiz_summary (user_id) VALUES (?)`;
 exports.addInfiniteQuizChallengeDetail = `INSERT INTO infinite_quiz_detail (challenge_id, user_id) VALUES(?, ?)`;

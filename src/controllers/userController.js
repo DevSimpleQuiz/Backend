@@ -368,9 +368,14 @@ const removeUserAccount = async (req, res, next) => {
     try {
       await connection.beginTransaction();
 
-      // user, score, solved_quizzes 테이블 속 계정 삭제
+      // 유저의 퀴즈 점수, 통계, 무한 퀴즈 챌린지, 유저 데이터 삭제
       await connection.query(scoreQuery.removeUserScoreHistory, userNumId);
       await connection.query(quizQuery.removeUserSolvedQuizHistory, userNumId);
+      await connection.query(quizQuery.removeUserInfiniteQuizDetail, userNumId);
+      await connection.query(
+        quizQuery.removeUserInfiniteQuizSummary,
+        userNumId
+      );
       // user id를 FK로 가진 테이블의 데이터들부터 삭제한 뒤에 user 테이블에서 유저 정보 삭제
       await connection.query(userQuery.removeUserAccount, userNumId);
 
