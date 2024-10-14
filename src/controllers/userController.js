@@ -6,7 +6,7 @@ const userQuery = require("../queries/userQuery.js");
 const scoreQuery = require("../queries/scoreQuery.js");
 const quizQuery = require("../queries/quizQuery.js");
 const { COOKIE_OPTION } = require("../constant/constant.js");
-const { gerRankInfo } = require("../services/rankService.js");
+const { gerMypageInfo, getMyRank } = require("../services/rankService.js");
 
 const {
   convertHashPassword,
@@ -259,28 +259,13 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-/**
- * # TODO: 갯수가 많이 늘어나도 이렇게 정렬하고 값을 찾을 수 있는가?
- * Data
-  {
-    "id": "jake",
-    "myRank": 6,      // 나의 순위
-    "solvedCount": 30// 지금까지 푼 문제 수
-  }
- */
-// src/controllers/userController.js
 const mypage = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
     const payload = await verifyToken(token);
     const userId = payload.id;
     const userIdResult = await pool.query(userQuery.getUserId, userId);
-    console.log("userIdResult : ", userIdResult);
-    console.log("userIdResult[0] : ", userIdResult[0]);
-    console.log("userIdResult[0][0] : ", userIdResult[0][0]);
     const userNumId = userIdResult[0][0]?.id;
-
-    console.log("userNumId : ", userNumId);
 
     if (!userNumId) {
       throw createHttpError(
@@ -289,24 +274,19 @@ const mypage = async (req, res, next) => {
       );
     }
 
-    const myRankInfo = await gerRankInfo(userNumId);
+    // TODO: userNumId를 매 번 빼내고 있는데 이 부분 제거하고 join해서 가져다 쓰게 할지,
+    // userNumId를 따로 추출하게 할지, 더 나은 방안 고려 필요, user id도 써야하므로 별도로 빼기 애매함
+    const rank = await getMyRank(userNumId);
+    const myRankInfo = await gerMypageInfo(userNumId);
 
-    if (myRankInfo === -1) {
-      console.log("사용자 순위를 찾을 수 없습니다.");
-      throw createHttpError(
-        StatusCodes.NOT_FOUND,
-        "사용자 순위를 찾을 수 없습니다."
-      );
-    }
-
-    const mypageInfo = {
+    return res.status(StatusCodes.OK).json({
       id: userId,
-      myRank: myRankInfo["myRank"],
-      solvedCount: myRankInfo["solvedCount"],
-    };
-    console.log(`mypageInfo : `, mypageInfo);
-
-    return res.status(StatusCodes.OK).json(mypageInfo);
+      rank: rank,
+      score: myRankInfo["score"], // 현재까지 총 점수
+      totalQuizCount: myRankInfo["totalQuizCount"], // 지금까지 푼 문제 수
+      totalSolvedQuizCount: myRankInfo["totalSolvedQuizCount"],
+      challengeCount: myRankInfo["challengeCount"], // 지금까지 무한 퀴즈 챌린지 한 횟수
+    });
   } catch (err) {
     console.error("mypage error : ", err);
     next(err);
@@ -331,38 +311,6 @@ const removeUserAccount = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
     const userNumId = await getUserNumIdByToken(token);
-    const findUserInfoQuery = `SELECT * FROM user WHERE id = ?`;
-    const findUserInfoQueryResult = await pool.query(
-      findUserInfoQuery,
-      userNumId
-    );
-
-    console.log(
-      "findUserInfoQueryResult[0][0] : ",
-      findUserInfoQueryResult[0][0]
-    );
-
-    const findUserScoreInfoQuery = `SELECT * FROM score WHERE user_id = ?`;
-    const findUserScoreInfoQueryResult = await pool.query(
-      findUserScoreInfoQuery,
-      userNumId
-    );
-
-    console.log(
-      "findUserScoreInfoQueryResult[0][0] : ",
-      findUserScoreInfoQueryResult[0][0]
-    );
-
-    const findSolvedQuizHistoryQuery = `SELECT * FROM solved_quizzes WHERE user_id = ?`;
-    const findSolvedQuizHistoryQueryResult = await pool.query(
-      findSolvedQuizHistoryQuery,
-      userNumId
-    );
-
-    console.log(
-      "findSolvedQuizHistoryQueryResult[0][0] : ",
-      findSolvedQuizHistoryQueryResult[0][0]
-    );
 
     const connection = await pool.getConnection();
     try {
